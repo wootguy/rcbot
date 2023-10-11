@@ -46,15 +46,7 @@
 
 #include "extdll.h"
 
-#ifndef RCBOT_META_BUILD
-#include "util.h"
-#else
-#include "dllapi.h"
-#include "meta_api.h"
-#endif
-
-// for cbase toggle
-#include "cbase.h"
+#include "mmlib.h"
 
 #include "bot.h"
 #include "waypoint.h"

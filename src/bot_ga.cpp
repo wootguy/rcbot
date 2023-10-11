@@ -31,14 +31,7 @@
 
 #include "extdll.h"
 
-#ifndef RCBOT_META_BUILD
-#include "util.h"
-#else
-#include "h_export_meta.h"
-#include "meta_api.h"
-#endif
-#include "cbase.h" // Need CBASE for classify()
-//#include "player.h"
+#include "mmlib.h"
 #include "bot_const.h"
 #include "bot.h"
 #include "bot_ga.h"

@@ -43,15 +43,7 @@
 //
 // Client functions, all players on the server are clients
 //
-#include "extdll.h"
-
-#ifndef RCBOT_META_BUILD
-#include "util.h"
-#include "cbase.h"
-#else
-#include "h_export_meta.h"
-#include "meta_api.h"
-#endif
+#include "mmlib.h"
 
 #include "bot_const.h"
 #include "bot.h"

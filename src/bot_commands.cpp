@@ -46,13 +46,7 @@
 
 #include "extdll.h"
 
-#ifndef RCBOT_META_BUILD
-#include "util.h"
-#include "cbase.h"
-#else
-#include "h_export_meta.h"
-#include "meta_api.h"
-#endif
+#include "mmlib.h"
 
 #include "bot_const.h"
 #include "bot.h"
@@ -307,6 +301,7 @@ eBotCvarState CUtilCommand :: action ( CClient *pClient, const char *arg1, const
 			
 		}
 	}
+	/*
     else if ( FStrEq("explo",arg1) )
     {   
 		if ( pEntity == NULL )
@@ -346,6 +341,7 @@ eBotCvarState CUtilCommand :: action ( CClient *pClient, const char *arg1, const
 		ExplosionCreate(tr.vecEndPos-(gpGlobals->v_forward*4),pEntity->v.v_angle,pEntity,magnitude,dodamage);
 		UTIL_BotScreenShake(tr.vecEndPos,16,100,2,magnitude);                           
 	}
+	*/
 	else if ( FStrEq("showreps",arg1) )
 	{
 		if ( arg2 && *arg2 )

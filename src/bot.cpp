@@ -47,13 +47,7 @@
 
 #include "extdll.h"
 
-#ifndef RCBOT_META_BUILD
-#include "util.h"
-#else
-#include "h_export_meta.h"
-#include "meta_api.h"
-#endif
-#include "cbase.h" // Need CBASE for classify()
+#include "mmlib.h"
 //#include "player.h"
 #include "bot_const.h"
 #include "bot.h"
@@ -76,7 +70,10 @@
 // BOT GLOBALS
 
 // engine functions
-extern DLL_FUNCTIONS gFunctionTable;
+extern DLL_FUNCTIONS 
+
+
+;
 
 // quick waypoint access
 extern CWaypointLocations WaypointLocations;
@@ -90,32 +87,6 @@ extern WAYPOINTS waypoints;
 
 #undef offsetof
 #define offsetof(s,m)	(size_t)&(((s *)0)->m)
-#ifdef _DEBUG
-BASEPTR	CBaseEntity::ThinkSet( BASEPTR func, char *name ) 
-	{ 
-		m_pfnThink = func; 
-		FunctionCheck( (void *)*((int *)((char *)this + ( offsetof(CBaseEntity,m_pfnThink)))), name ); 
-		return func;
-	}
-	ENTITYFUNCPTR CBaseEntity:: TouchSet( ENTITYFUNCPTR func, char *name ) 
-	{ 
-		m_pfnTouch = func; 
-		FunctionCheck( (void *)*((int *)((char *)this + ( offsetof(CBaseEntity,m_pfnTouch)))), name ); 
-		return func;
-	}
-	USEPTR	CBaseEntity:: UseSet( USEPTR func, char *name ) 
-	{ 
-		m_pfnUse = func; 
-		FunctionCheck( (void *)*((int *)((char *)this + ( offsetof(CBaseEntity,m_pfnUse)))), name ); 
-		return func;
-	}
-	ENTITYFUNCPTR CBaseEntity::	BlockedSet( ENTITYFUNCPTR func, char *name ) 
-	{ 
-		m_pfnBlocked = func; 
-		FunctionCheck( (void *)*((int *)((char *)this + ( offsetof(CBaseEntity,m_pfnBlocked)))), name ); 
-		return func;
-	}
-#endif
 
 // safe - freeing... ??
 // shove in the POINTER to the pointer to free, so we can (nullify)
@@ -6206,7 +6177,7 @@ BOOL CBot :: UpdateVisibles ( void )
 	}	
 
 	// Setup the bots visibility, for quick vis checking
-	(*gFunctionTable.pfnSetupVisibility)(NULL,m_pEdict,&pvs,&pas);
+	gpGamedllFuncs->dllapi_table->pfnSetupVisibility(NULL,m_pEdict,&pvs,&pas);
 
 	// the maximum entity index we will look at this run
 	int iMax = m_iVisUpdateRevs + m_Profile.m_iVisionRevs;//gBotGlobals.m_iMaxVisUpdateRevs;
@@ -9624,10 +9595,11 @@ BOOL CBot :: IsEnemy ( edict_t *pEntity )
 			
 			if ( pEnemypev->flags & FL_MONSTER )
 			{
+				// TODO: w00t disabled
+				CBaseEntity *pEnt = (CBaseEntity*)GET_PRIVATE(pEntity);
+				bool isAlly = true; //pEnt->m_fPlayerAlly
 				
-				CBaseEntity *pEnt =  CBaseEntity::Instance(pEnemypev);// (CBaseEntity*)GET_PRIVATE(pEntity);
-				
-				if ( !pEnt->m_fPlayerAlly )
+				if ( !isAlly )
 				{
 					int iClass = pEnt->Classify();
 

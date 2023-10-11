@@ -7,7 +7,6 @@ project(rcbot)
 
 set(SOURCE_FILES
 	src/actionutility.h
-	src/api_info.cpp
 	src/bak_bot_weapons.h
 	src/bits.h src/bits.cpp
 	src/bot.h src/bot.cpp
@@ -18,14 +17,12 @@ set(SOURCE_FILES
 	src/bot_commands.h
 	src/bot_const.h
 	src/bot_enemy_cost_ga.h
-	src/bot_func.h
 	src/bot_ga.h src/bot_ga.cpp
 	src/bot_learnsys.h
 	src/bot_menu.h src/bot_menu.cpp
 	src/bot_navigate.cpp
 	src/bot_nn.cpp
 	src/bot_rep.cpp
-	src/bot_start.cpp
 	src/bot_texture.h
 	src/bot_tick.h
 	src/bot_visibles.h src/bot_visibles.cpp
@@ -44,15 +41,15 @@ set(SOURCE_FILES
 	src/netmessages.cpp
 	src/nn.h
 	src/perceptron.h src/perceptron.cpp
-	src/rcbot_meta_api.cpp
-	src/sdk_util.cpp
 	src/som.h src/som.cpp
 	src/util.cpp
 	src/waypoint.h src/waypoint.cpp
+	src/main.cpp
 )
 
 add_library(${PROJECT_NAME} SHARED)
 add_subdirectory(mmlib)
+add_compile_definitions(RCBOT_META_BUILD)
 
 if(MSVC)
 	source_group("Header Files\\sven" FILES ${SVEN_API_HEADERS})

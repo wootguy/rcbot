@@ -54,22 +54,10 @@
 #include <sys/stat.h>
 #endif
 
-#include "extdll.h"
-
-#ifndef RCBOT_META_BUILD
-#include "util.h"
-#include "cbase.h"
-#include "enginecallback.h"
-#else
-#include "h_export_meta.h"
-#include "dllapi.h"
-#include "meta_api.h"
-#endif
+#include "mmlib.h"
 
 #include "bot.h"
 #include "waypoint.h"
-
-extern DLL_FUNCTIONS gFunctionTable;
 
 CWaypointLocations WaypointLocations;
 CWaypointVisibilityTable WaypointVisibility;
@@ -415,7 +403,7 @@ void CWaypointLocations :: DrawWaypoints ( edict_t *pEntity, Vector &vOrigin, fl
 	pas = NULL;
 
 	// Setup visibility, for quick vis checking
-	(*gFunctionTable.pfnSetupVisibility)(NULL,pEntity,&pvs,&pas);
+	gpGamedllFuncs->dllapi_table->pfnSetupVisibility(NULL,pEntity,&pvs,&pas);
 
 	FOR_EACH_WPT_LOC_BUCKET(vOrigin);
 
