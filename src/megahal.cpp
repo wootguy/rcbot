@@ -2118,9 +2118,9 @@ BOOL LoadHALBrainForPersonality ( bot_profile_t *pBotProfile, BOOL bPreTrain )
    }
 
    // check for brain file validity
-   fread (cookie, sizeof ("RCBOTHAL"), 1, fp); // read the brain signature
+   fread (cookie, strlen("RCBOTHAL"), 1, fp); // read the brain signature
 
-   if (strcmp (cookie, "RCBOTHAL") != 0)
+   if (strncmp (cookie, "RCBOTHAL", 8) != 0)
    {
 	  // delete szName;
       BotMessage(NULL,0,"LoadHALBrainForPersonality(): %s's HAL brain damaged!", pBotProfile->m_szBotName); // bad brain
