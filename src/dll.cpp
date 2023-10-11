@@ -43,24 +43,7 @@
 //
 // engine + initializing functions + bot interface
 //
-
-#include "extdll.h"
-
-#ifndef RCBOT_META_BUILD
-
-#include "enginecallback.h"
-#include "util.h"
-#include "cbase.h"
-
-#else
-
-#include "h_export_meta.h"
-#include "dllapi.h"
-#include "meta_api.h"
-
-#endif
-
-#include "engine.h"
+#include "mmlib.h"
 
 #include "entity_state.h"
 
@@ -80,7 +63,6 @@ extern int debug_engine;
 extern globalvars_t *gpGlobals;
 extern char *g_argv;
 
-DLL_FUNCTIONS other_gFunctionTable;
 DLL_GLOBAL const Vector g_vecZero = Vector(0,0,0);
 
 CBotGlobals gBotGlobals;
@@ -772,12 +754,17 @@ void ClientCommand( edict_t *pEntity )
 	else
 	{
 		// duplicate strings for bot client commands
+		// TODO: w00t disabled
+		println("Ignored fake bot command");
+		RETURN_META(MRES_IGNORED);
+		/*
 		pcmd = strdup(pfnCmd_Argv(0));
 		arg1 = strdup(pfnCmd_Argv(1));
 		arg2 = strdup(pfnCmd_Argv(2));
 		arg3 = strdup(pfnCmd_Argv(3));
 		arg4 = strdup(pfnCmd_Argv(4));
 		arg5 = strdup(pfnCmd_Argv(5));
+		*/
 	}
 	
 	eBotCvarState iState = BOT_CVAR_CONTINUE; 
@@ -847,8 +834,9 @@ void ClientCommand( edict_t *pEntity )
 
 					if ( bSenderIsBot )
 					{
-						CmdArgv_func = pfnCmd_Argv;
-						iArgCount = pfnCmd_Argc();
+						// TODO: w00t disabled
+						//CmdArgv_func = pfnCmd_Argv;
+						//iArgCount = pfnCmd_Argc();
 					}
 					else
 					{
@@ -1435,115 +1423,6 @@ int AllowLagCompensation( void )
 	return (*other_gFunctionTable.pfnAllowLagCompensation)();
 #endif
 }
-
-DLL_FUNCTIONS gFunctionTable =
-{
-   GameDLLInit,               //pfnGameInit
-   DispatchSpawn,             //pfnSpawn
-   DispatchThink,             //pfnThink
-   DispatchUse,               //pfnUse
-   DispatchTouch,             //pfnTouch
-   DispatchBlocked,           //pfnBlocked
-   DispatchKeyValue,          //pfnKeyValue
-   DispatchSave,              //pfnSave
-   DispatchRestore,           //pfnRestore
-   DispatchObjectCollsionBox, //pfnAbsBox
-
-   SaveWriteFields,           //pfnSaveWriteFields
-   SaveReadFields,            //pfnSaveReadFields
-
-   SaveGlobalState,           //pfnSaveGlobalState
-   RestoreGlobalState,        //pfnRestoreGlobalState
-   ResetGlobalState,          //pfnResetGlobalState
-
-   ClientConnect,             //pfnClientConnect
-   ClientDisconnect,          //pfnClientDisconnect
-   ClientKill,                //pfnClientKill
-   ClientPutInServer,         //pfnClientPutInServer
-   ClientCommand,             //pfnClientCommand
-   ClientUserInfoChanged,     //pfnClientUserInfoChanged
-   ServerActivate,            //pfnServerActivate
-   ServerDeactivate,          //pfnServerDeactivate
-
-   PlayerPreThink,            //pfnPlayerPreThink
-   PlayerPostThink,           //pfnPlayerPostThink
-
-   StartFrame,                //pfnStartFrame
-   ParmsNewLevel,             //pfnParmsNewLevel
-   ParmsChangeLevel,          //pfnParmsChangeLevel
-
-   GetGameDescription,        //pfnGetGameDescription    Returns string describing current .dll game.
-   PlayerCustomization,       //pfnPlayerCustomization   Notifies .dll of new customization for player.
-
-   SpectatorConnect,          //pfnSpectatorConnect      Called when spectator joins server
-   SpectatorDisconnect,       //pfnSpectatorDisconnect   Called when spectator leaves the server
-   SpectatorThink,            //pfnSpectatorThink        Called when spectator sends a command packet (usercmd_t)
-
-   Sys_Error,                 //pfnSys_Error          Called when engine has encountered an error
-
-   PM_Move,                   //pfnPM_Move
-   PM_Init,                   //pfnPM_Init            Server version of player movement initialization
-   PM_FindTextureType,        //pfnPM_FindTextureType
-
-   SetupVisibility,           //pfnSetupVisibility        Set up PVS and PAS for networking for this client
-   UpdateClientData,          //pfnUpdateClientData       Set up data sent only to specific client
-   AddToFullPack,             //pfnAddToFullPack
-   CreateBaseline,            //pfnCreateBaseline        Tweak entity baseline for network encoding, allows setup of player baselines, too.
-   RegisterEncoders,          //pfnRegisterEncoders      Callbacks for network encoding
-   GetWeaponData,             //pfnGetWeaponData
-   CmdStart,                  //pfnCmdStart
-   CmdEnd,                    //pfnCmdEnd
-   ConnectionlessPacket,      //pfnConnectionlessPacket
-   GetHullBounds,             //pfnGetHullBounds
-   CreateInstancedBaselines,  //pfnCreateInstancedBaselines
-   InconsistentFile,          //pfnInconsistentFile
-   AllowLagCompensation,      //pfnAllowLagCompensation
-};
-
-#ifndef RCBOT_META_BUILD
-
-#ifdef __BORLANDC__
-int EXPORT GetEntityAPI( DLL_FUNCTIONS *pFunctionTable, int interfaceVersion )
-#else
-extern "C" EXPORT int GetEntityAPI( DLL_FUNCTIONS *pFunctionTable, int interfaceVersion )
-#endif
-{
-   // check if engine's pointer is valid and version is correct...
-
-   if ( !pFunctionTable || interfaceVersion != INTERFACE_VERSION )
-      return FALSE;
-
-   // pass engine callback function table to engine...
-   memcpy( pFunctionTable, &gFunctionTable, sizeof( DLL_FUNCTIONS ) );
-
-   // pass other DLLs engine callbacks to function table...
-   if (!(*other_GetEntityAPI)(&other_gFunctionTable, INTERFACE_VERSION))
-   {
-      return FALSE;  // error initializing function table!!!
-   }
-
-   return TRUE;
-}
-
-#ifdef __BORLANDC__
-int EXPORT GetNewDLLFunctions( NEW_DLL_FUNCTIONS *pFunctionTable, int *interfaceVersion )
-#else
-extern "C" EXPORT int GetNewDLLFunctions( NEW_DLL_FUNCTIONS *pFunctionTable, int *interfaceVersion )
-#endif
-{
-   if (other_GetNewDLLFunctions == NULL)
-      return FALSE;
-
-   // pass other DLLs engine callbacks to function table...
-   if (!(*other_GetNewDLLFunctions)(pFunctionTable, interfaceVersion))
-   {
-      return FALSE;  // error initializing function table!!!
-   }
-
-   return TRUE;
-}
-
-#endif
 
 // Fakeclient Command code
 //
@@ -2610,29 +2489,3 @@ edict_t * CTFCCapturePoints :: getCapturePoint ( int group, int goal, int team, 
 
 	return NULL;	
 }
-//////////////////////////////////////////////////////////////////////////////
-// METAMOD REQUIRED...
-
-#ifdef RCBOT_META_BUILD
-C_DLLEXPORT int GetEntityAPI2 (DLL_FUNCTIONS *pFunctionTable, int *interfaceVersion) 
-{ 
-	// this is one of the initialization functions hooked by metamod in the gamedll API 
-   if(!pFunctionTable) {
-      UTIL_LogPrintf("GetEntityAPI2 called with null pFunctionTable");
-      return(FALSE);
-   }
-   else if(*interfaceVersion != INTERFACE_VERSION) {
-      UTIL_LogPrintf("GetEntityAPI2 version mismatch; requested=%d ours=%d", *interfaceVersion, INTERFACE_VERSION);
-      //! Tell engine what version we had, so it can figure out who is out of date.
-      *interfaceVersion = INTERFACE_VERSION;
-      return(FALSE);
-   }
-
-    // gFunctionTable defined in dll.cpp
-	// copy the whole table for metamod to know which functions we are using here 
-	memcpy (pFunctionTable, &gFunctionTable, sizeof (DLL_FUNCTIONS)); 
-
-	return (TRUE); // alright 
-} 
-
-#endif

@@ -93,6 +93,7 @@ using namespace std;
 
 #endif // RCBOT META BUILD
 
+class CBaseEntity;
 
 class AvHBaseBuildable;
 
@@ -250,7 +251,6 @@ edict_t *UTIL_CheckTeleExit ( Vector vOrigin, edict_t *pOwner, edict_t *pEntranc
   Vector UTIL_AngleBetweenOrigin(entvars_t *pev,Vector vOrigin);
     BOOL UTIL_OnGround ( entvars_t *pev );
     int     UTIL_TFC_getMaxArmor ( edict_t *pEdict );
-	void	ClientPrint	( edict_t *pEdict, int msg_dest, const char *msg_name );
     float   UTIL_YawAngleBetweenOrigin(entvars_t *pev,Vector vOrigin);
 	BOOL	UTIL_IsFacingEntity(entvars_t *pev, entvars_t *pevEntity);
 	float   UTIL_AngleBetweenVectors(Vector vec1, Vector vec2);

@@ -28,14 +28,7 @@
  *    version.
  *
  */
-#include "extdll.h"
-#include "enginecallback.h"
-#ifndef RCBOT_META_BUILD
-#include "util.h"
-#else
-#include "h_export_meta.h"
-#include "meta_api.h"
-#endif
+#include "mmlib.h"
 
 #include "bot.h"
 #include "perceptron.h"

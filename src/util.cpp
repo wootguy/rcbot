@@ -59,17 +59,7 @@
 // Bot & engine utility functions
 //
 
-#include "extdll.h"
-
-#ifndef RCBOT_META_BUILD
-#include "util.h"
-#include "engine.h"
-#else
-#include "h_export_meta.h"
-#include "dllapi.h"
-#include "meta_api.h"
-#endif
-#include "cbase.h"
+#include "mmlib.h"
 #include "bot_const.h"
 #include "bot.h"
 
@@ -529,31 +519,6 @@ void UTIL_SetSize( entvars_t *pev, const Vector &vecMin, const Vector &vecMax )
 void UTIL_SetOrigin( entvars_t *pev, const Vector &vecOrigin )
 {
    SET_ORIGIN(ENT(pev), vecOrigin );
-}
-
-void ClientPrint( edict_t *pEntity, int msg_dest, const char *msg_name)
-{
-	const char *szMsg = {"TextMsg"};
-	
-	int msg_id;
-	
-	// net message already started, can't start another one
-	if ( gBotGlobals.m_bNetMessageStarted )
-	{
-		//ALERT(at_console,msg_name);
-		return;
-	}
-
-	msg_id = GetMessageID(szMsg);
-
-	if ( msg_id > 0 )
-	{
-		g_engfuncs.pfnMessageBegin( MSG_ONE, msg_id , NULL, pEntity );
-		
-		g_engfuncs.pfnWriteByte( msg_dest );
-		g_engfuncs.pfnWriteString( msg_name );
-		g_engfuncs.pfnMessageEnd();
-	}
 }
 
 void UTIL_SayText( const char *pText, edict_t *pEdict )
@@ -1572,167 +1537,6 @@ void UTIL_SelectItem(edict_t *pEdict, char *item_name)
 
 //#ifndef RCBOT_META_BUILD
 
-void ExplosionCreate( const Vector &center, const Vector &angles, edict_t *pOwner, int magnitude, BOOL doDamage )
-{
-	/*if ( gBotGlobals.IsMod(MOD_SVENCOOP) )
-	{
-		KeyValueData	kvd;
-		char			buf[128];
-
-		edict_t *pExplosion = CREATE_NAMED_ENTITY(MAKE_STRING("env_explosion"));
-		sprintf( buf, "%3d", magnitude );
-		kvd.szKeyName = "iMagnitude";
-		kvd.szValue = buf;
-		
-		DispatchKeyValue(pExplosion,&kvd);
-		if ( !doDamage )
-			pExplosion->v.spawnflags |= (1<<0);//SF_ENVEXPLOSION_NODAMAGE;
-		
-		pExplosion->v.origin = center;
-		pExplosion->v.angles = pExplosion->v.v_angle = angles;
-		pExplosion->v.owner = pOwner;
-
-		DispatchSpawn(pExplosion);//->Spawn();
-		DispatchUse(pExplosion,pOwner);//->Use( (CBaseEntity*)GET_PRIVATE(pOwner), (CBaseEntity*)GET_PRIVATE(pOwner), USE_TOGGLE, 0 );
-	}
-	else if ( !gBotGlobals.IsMod(MOD_SVENCOOP) )
-	{
-		
-		KeyValueData	kvd;
-		char			buf[128];
-
-		CBaseEntity *pExplosion = CreateEnt( "env_explosion", center, angles, pOwner );
-		sprintf( buf, "%3d", magnitude );
-		kvd.szKeyName = "iMagnitude";
-		kvd.szValue = buf;
-		pExplosion->KeyValue( &kvd );
-		if ( !doDamage )
-			pExplosion->pev->spawnflags |= (1<<0);//SF_ENVEXPLOSION_NODAMAGE;
-		
-		pExplosion->Spawn();
-		pExplosion->Use( (CBaseEntity*)GET_PRIVATE(pOwner), (CBaseEntity*)GET_PRIVATE(pOwner), USE_TOGGLE, 0 );
-	}*/
-	/*
-	#define	TE_EXPLOSION		3		// additive sprite, 2 dynamic lights, flickering particles, explosion sound, move vertically 8 pps
-	// coord coord coord (position) 
-	// short (sprite index)
-	// byte (scale in 0.1's)
-	// byte (framerate)
-	// byte (flags)	*/
-//	else
-	{
-		int byteMag = magnitude;
-
-		if ( byteMag > 255 )
-			byteMag = 255;
-
-		MESSAGE_BEGIN( MSG_PAS, SVC_TEMPENTITY, center );
-		WRITE_BYTE( TE_EXPLOSION);
-		WRITE_COORD( center.x );
-		WRITE_COORD( center.y );
-		WRITE_COORD( center.z );
-		WRITE_SHORT( gBotGlobals.m_sModelIndexFireball );
-		WRITE_BYTE( (BYTE)byteMag ); // scale * 10
-		WRITE_BYTE( 15  ); // framerate
-		WRITE_BYTE( TE_EXPLFLAG_NONE );
-		MESSAGE_END();
-
-		float mag = magnitude*4;
-
-		if ( doDamage )
-		{
-			//g_engfuncs.
-			//extern void RadiusDamage( Vector vecSrc, entvars_t *pevInflictor, entvars_t *pevAttacker, float flDamage, float flRadius, int iClassIgnore, int bitsDamageType );
-            RadiusDamage(center,&pOwner->v,&pOwner->v, magnitude , magnitude/2 , 0, (1 << 6));
-		}
-	}
-}
-
-void RadiusDamage( Vector vecSrc, entvars_t *pevInflictor, entvars_t *pevAttacker, float flDamage, float flRadius, int iClassIgnore, int bitsDamageType )
-{
-	CBaseEntity *pEntity = NULL;
-	edict_t *pEdict = NULL;
-
-	TraceResult	tr;
-	float		flAdjustedDamage, falloff;
-	Vector		vecSpot;
-
-	if ( flRadius )
-		falloff = flDamage / flRadius;
-	else
-		falloff = 1.0;
-
-	int bInWater = (UTIL_PointContents ( vecSrc ) == CONTENTS_WATER);
-
-	vecSrc.z += 1;// in case grenade is lying on the ground
-
-	if ( !pevAttacker )
-		pevAttacker = pevInflictor;
-	
-	// iterate on all entities in the vicinity.
-	while ((pEdict = UTIL_FindEntityInSphere( pEdict, vecSrc, flRadius )) != NULL)
-	{
-		pEntity = (CBaseEntity *)GET_PRIVATE(pEdict);
-		
-		if ( pEntity && pEntity->pev && pEntity->edict() && !pEntity->edict()->free )
-		{
-			
-			if ( pEntity->pev->takedamage != DAMAGE_NO )
-			{
-				// UNDONE: this should check a damage mask, not an ignore
-				if ( iClassIgnore != CLASS_NONE && pEntity->Classify() == iClassIgnore )
-				{// houndeyes don't hurt other houndeyes with their attack
-					continue;
-				}
-				
-				// blast's don't tavel into or out of water
-				if (bInWater && pEntity->pev->waterlevel == 0)
-					continue;
-				if (!bInWater && pEntity->pev->waterlevel == 3)
-					continue;
-				
-				vecSpot = pEntity->BodyTarget( vecSrc );
-				
-				UTIL_TraceLine ( vecSrc, vecSpot, dont_ignore_monsters, ENT(pevInflictor), &tr );
-				
-				if ( tr.flFraction == 1.0 || tr.pHit == pEntity->edict() )
-				{// the explosion can 'see' this entity, so hurt them!
-					if (tr.fStartSolid)
-					{
-						// if we're stuck inside them, fixup the position and distance
-						tr.vecEndPos = vecSrc;
-						tr.flFraction = 0.0;
-					}
-					
-					// decrease damage for an ent that's farther from the bomb.
-					flAdjustedDamage = ( vecSrc - tr.vecEndPos ).Length() * falloff;
-					flAdjustedDamage = flDamage - flAdjustedDamage;
-					
-					if ( flAdjustedDamage < 0 )
-					{
-						flAdjustedDamage = 0;
-					}
-				/*	
-					// ALERT( at_console, "hit %s\n", STRING( pEntity->pev->classname ) );
-					if (tr.flFraction != 1.0)
-					{
-						//ClearMultiDamage( );
-						pEntity->TraceAttack( pevInflictor, flAdjustedDamage, (tr.vecEndPos - vecSrc).Normalize( ), &tr, bitsDamageType );
-						//ApplyMultiDamage( pevInflictor, pevAttacker );
-					}
-					else
-					{*/
-						pEntity->TakeDamage ( pevInflictor, pevAttacker, flAdjustedDamage, bitsDamageType );
-
-						pEntity->pev->velocity = (pEntity->pev->origin-vecSrc).Normalize()*flAdjustedDamage;
-					//}
-				}
-			}
-		}
-	}
-}
-
-
 CBaseEntity *CreateEnt( char *szName, const Vector &vecOrigin, const Vector &vecAngles, edict_t *pentOwner )
 {
 	edict_t	*pent;
@@ -1950,23 +1754,6 @@ edict_t *UTIL_FacingEnt ( edict_t *pPlayer, BOOL any )
 
 }
 
-//=========================================================
-// UTIL_LogPrintf - Prints a logged message to console.
-// Preceded by LOG: ( timestamp ) < message >
-//=========================================================
-void UTIL_LogPrintf( char *fmt, ... )
-{
-   va_list        argptr;
-   static char    string[1024];
-   
-   va_start ( argptr, fmt );
-   vsprintf ( string, fmt, argptr );
-   va_end   ( argptr );
-
-   // Print to server console
-   ALERT( at_logged, "%s", string );
-}
-
 void UTIL_FixAngles ( Vector *vAngles )
 {
 	UTIL_FixFloatAngle ( &vAngles->x );
@@ -2179,34 +1966,6 @@ void UTIL_BotHudMessage( edict_t *pEntity, const hudtextparms_t &textparms, cons
 			WRITE_STRING( tmp );
 		}
 	MESSAGE_END();
-}
-
-unsigned short FixedUnsigned16( float value, float scale )
-{
-	int output;
-
-	output = value * scale;
-	if ( output < 0 )
-		output = 0;
-	if ( output > 0xFFFF )
-		output = 0xFFFF;
-
-	return (unsigned short)output;
-}
-
-short FixedSigned16( float value, float scale )
-{
-	int output;
-
-	output = value * scale;
-
-	if ( output > 32767 )
-		output = 32767;
-
-	if ( output < -32768 )
-		output = -32768;
-
-	return (short)output;
 }
 
 /*

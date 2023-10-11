@@ -43,21 +43,10 @@
 //
 // engine functions from half-life
 //
-
-#include "extdll.h"
-
-#ifndef RCBOT_META_BUILD
-#include "util.h"
-#include "cbase.h"
-#else
-#include "h_export_meta.h"
-#include "dllapi.h"
-#include "meta_api.h"
-#endif
+#include "mmlib.h"
 
 #include "bot.h"
 #include "bot_client.h"
-#include "engine.h"
 
 #include "waypoint.h"
 
