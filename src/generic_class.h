@@ -823,116 +823,6 @@ class dataArray
 		T *m_pArray;
 		int m_iArrayMax;		
 };
-/*
-template <class T>
-class dataUnconstArray
-{
-	public:
-		
-		dataUnconstArray( )
-		{
-			this->Init();
-		}
-		
-		~dataUnconstArray()
-		{
-			this->Clear();
-		}
-
-		inline Size (void)
-		{
-			return m_iArrayMax;
-		}
-
-		inline void Destroy (void)
-		{
-			delete m_pArray;			
-		}
-
-		inline void Init ( void )
-		{
-			m_pArray = NULL;
-			m_iArrayMax = -1;
-		}
-
-		inline BOOL IsEmpty ( void )
-		{
-			return (m_pArray == NULL);
-}
-
-		inline void Clear ( void )
-		{
-			this->Destroy();
-			this->Init();
-		}
-
-		T Random ( void )
-		{
-			return m_pArray[RANDOM_LONG(0,m_iArrayMax-1)];
-		}
-
-		void Add ( const T pObj )
-		{
-			if ( m_pArray == NULL )
-			{
-				m_pArray = new T;//(T*)malloc(sizeof(T));
-				m_pArray[0] = pObj;
-				m_iArrayMax = 1;
-			}
-			else
-			{			
-				T *temp = new T[m_iArrayMax+1];
-
-				memcpy(temp,m_pArray,sizeof(T)*m_iArrayMax);
-
-				temp[m_iArrayMax] = pObj;
-				m_iArrayMax++;
-
-				delete m_pArray;
-
-				m_pArray = temp;
-
-			}
-		}
-		
-
-
-		T ReturnValueFromIndex ( int iIndex )
-		{
-			assert(m_pArray != NULL);
-			assert(iIndex >= 0);
-			assert(iIndex < m_iArrayMax);
-
-			if ( ( m_pArray != NULL ) && ( (iIndex >= 0) && (iIndex < m_iArrayMax) ) )
-				return m_pArray[iIndex];
-
-			BotMessage(NULL,0,"dataUnconstArray::ReturnValueFromIndex() Error !");
-
-			// return first array index
-			return T(NULL);
-		}
-
-		BOOL IsMember ( T Obj )
-		{
-			int i;
-
-			if ( m_pArray == NULL )
-				return FALSE;
-
-			for ( i = 0; i < m_iArrayMax; i ++ )
-			{
-				if ( m_pArray[i] == Obj )
-					return TRUE;
-			}
-
-			return FALSE;
-		}
-
-		int m_iArrayMax;
-		
-	protected:
-		T *m_pArray;		
-};*/
 
 template <class T>
 class dataUnconstArray
@@ -958,13 +848,8 @@ class dataUnconstArray
 		{
 			if ( array.size() == 0  )
 				return;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-			vector<T>::iterator it;
-#else
-			/*anonym001*/
-			typename vector<T>::iterator it;
-#endif
-			for ( it = array.begin(); it != array.end(); ++ it )
+
+			for (auto it = array.begin(); it != array.end(); ++ it )
 			{
 				if ( *it == obj )
 				{
@@ -979,14 +864,7 @@ class dataUnconstArray
 			if ( array.size() == 0  )
 				return;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
-			vector<T>::iterator it;
-#else
-			/*anonym001*/
-			typename vector<T>::iterator it;
-#endif
-
-			for ( it = array.begin(); it != array.end(); ++ it )
+			for (auto it = array.begin(); it != array.end(); ++ it )
 			{
 				/* pointer comparison only */
 //#if defined(_WIN32) && !defined(__CYGWIN__)
@@ -1076,52 +954,5 @@ class dataUnconstArray
 	private:
 		vector<T> array;
 };
-/*
-#define D_HASH_TABLE_SETS 1
-template <class T>
-class dataHashTable
-{
-	public:
-		dataHashTable()
-		{
-			int i;
-
-			for ( i = 0; i < D_HASH_TABLE_SETS; i++ )
-				m_Lists[i].Init();
-		}
-
-		void Add ( int iHashValue, T pNewObj )
-		{
-			int iHashNum = iHashValue % D_HASH_TABLE_SETS;
-
-			assert(iHashNum>=0);
-			assert(iHashNum<D_HASH_TABLE_SETS);
-
-			m_Lists[iHashNum].Push(pNewObj);
-		}
-
-		void ProcessHashTableHashNum ( void (*pProcessFunction)(const dataStack<T>), int iHashValue )
-		{
-			int iHashNum = iHashValue % D_HASH_TABLE_SETS;
-
-			assert(iHashNum>=0);
-			assert(iHashNum<D_HASH_TABLE_SETS);
-
-			(*pProcessFunction)(m_Lists[iHashNum]);
-		}
-
-		void ProcessHashTable ( void (*pProcessFunction)(const dataStack<T>) )
-		{
-			int i;
-
-			for ( i = 0; i < D_HASH_TABLE_SETS; i ++ )
-				(*pProcessFunction)(m_Lists[i]);
-		}
-
-	private:
-
-		dataStack<T> m_Lists[D_HASH_TABLE_SETS];
-};
-*/
 
 #endif

@@ -1886,90 +1886,9 @@ public:
 	}
 
 	void Init( void )
-	{		
-		memset(this,0,sizeof(CRememberedPositions));
-
-//		m_iOldest = -1;
-	//	m_iNewest = -1;
-	}
-
-/*	void addPosition ( Vector vOrigin, edict_t *pEntity )
 	{
-		if ( m_iOldestPosition >= m_iPositions )
-			m_iOldestPosition = 0;
-
-		m_Positions[m_iOldestPosition] = new CRememberPosition(vOrigin,pEntity);
-
-		m_iOldestPosition ++;
-
-		if ( m_iPositions < MAX_REMEMBER_POSITIONS )
-			m_iPositions++;
+		m_Positions.Clear();
 	}
-
-	void fallDown ( int iLocation )
-	{
-		int i;
-
-		i = iLocation;
-
-		while ( i < (MAX_REMEMBER_POSITIONS-1) )
-			m_Positions[i] = m_Positions[i++];
-
-		if ( (m_iOldestPosition != 0) && (m_iOldestPosition > i) )
-			m_iOldestPosition = i - 1;
-	}
-
-	BOOL gotPosition ()
-	{
-		return (m_iPositions > 0);
-	}
-
-	Vector getNewest ()
-	{
-		return m_Positions[getNewestLocation()].getVector();
-	}
-
-	Vector getPosition ()
-	{
-		return m_Positions[0].getVector();
-	}
-
-	void removeNewest ()
-	{
-		fallDown(getNewestLocation());
-	}
-
-	int getNewestLocation ()
-	{
-		int iNew = (m_iOldestPosition + 1);
-
-		if ( iNew > m_iPositions )
-			iNew = 0;
-
-		return iNew;
-	}
-
-	void removePosition ( edict_t *pEntity )
-	{
-		int i;
-
-		i = 0;
-
-		while ( i < m_iPositions )
-		{
-			if ( m_Positions[i].isEntity(pEntity) )
-			{
-				fallDown(i);
-
-				// restart search
-				i = 0;
-
-				continue;
-			}
-
-			i++;
-		}
-	}*/
 
 	void addPosition ( Vector vOrigin, edict_t *pEntity, int flags, Vector vVisibleOrigin )
 	{
@@ -1979,67 +1898,12 @@ public:
 		
 		CRememberPosition *e = m_Positions.getExisting(newPosition);
 
-		if ( e != NULL )
+		if (e != NULL)
 			m_Positions.Remove(*e);
 		else if ( m_Positions.Size() > MAX_REMEMBER_POSITIONS )
 			m_Positions.Remove(m_Positions[0]);
 
 		m_Positions.Add(newPosition);
-		
-
-		/*
-		int iExist = -1;
-
-		// check if entity already remembered
-		for ( int i = 0; i < m_iPositions; i ++ )
-		{
-			if ( pEntity && (m_Positions[i].getEntity()) && (m_Positions[i].getEntity() == pEntity) )
-			{
-				iExist = i;
-				break;
-			}
-		}
-
-		CRememberPosition newPosition = CRememberPosition(vOrigin,pEntity);
-
-		newPosition.setFlags(flags);
-		newPosition.setVisibleOrigin(vVisibleOrigin);
-
-		if ( iExist != -1 )
-		{
-			// overwrite existing entity position
-			m_Positions[iExist] = newPosition;
-			m_iNewest = iExist;
-		}
-		else if ( m_iPositions == MAX_REMEMBER_POSITIONS )
-		{
-			// need to over-write a current position
-			m_Positions[m_iOldest] = newPosition;
-			m_iNewest = m_iOldest;
-			// newly overwritten
-			m_iCurrent = m_iOldest;
-
-			// next newest
-			m_iOldest++;
-
-			// wrap around 0 to MAX_REMEMBER_POSITIONS
-			if ( m_iOldest == MAX_REMEMBER_POSITIONS )
-				m_iOldest = 0;
-		}
-		else
-		{
-			// over-write a non used position
-			if ( m_iOldest == -1 )
-				m_iOldest = m_iPositions;
-
-			m_iCurrent = m_iPositions;
-
-			m_Positions[m_iPositions] = newPosition;
-			m_iNewest = m_iPositions;
-			m_iCurrent = m_iPositions;
-				
-			m_iPositions ++;
-		}*/
 	}
 
 	CRememberPosition *getLatestWFlags ( int flags )
@@ -2056,29 +1920,12 @@ public:
 	void removePosition ( edict_t *pEntity )
 	{
 		int i;
-//		int j;
 
 		for ( i = 0; i < m_Positions.Size(); i ++ )
 		{
-			if ( m_Positions[i].isEntity(pEntity) )//|| (m_Positions[i].getVector() == vOrigin))
+			if ( m_Positions[i].isEntity(pEntity) )
 			{
 				m_Positions.Remove(m_Positions[i]);
-				/*
-				for ( j = i; j < (MAX_REMEMBER_POSITIONS-1); j ++ )
-				{
-					m_Positions[j] = m_Positions[j+1];
-				}
-
-				m_iPositions--;
-
-				if ( m_iNewest == i )
-				{
-					if ( i > 0 )
-						m_iNewest = (i-1);
-					else
-						m_iNewest = 0;
-				}
-*/
 				return;
 			}
 		}
@@ -2127,12 +1974,7 @@ public:
 	}
 
 private:
-	dataUnconstArray<CRememberPosition> m_Positions;//[MAX_REMEMBER_POSITIONS];	
-	/*
-	int m_iCurrent;
-	int m_iNewest;
-	int m_iOldest;
-	int m_iPositions;*/
+	dataUnconstArray<CRememberPosition> m_Positions;
 };
 
 /*
