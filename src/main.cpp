@@ -40,6 +40,166 @@ extern CWaypointLocations WaypointLocations;
 
 cvar_t bot_ver_cvar = { BOT_VER_CVAR,BOT_VER,FCVAR_SERVER };
 
+int pfnCmd_Argc(void)
+{
+	// this function returns the number of arguments the current client command string has. Since 
+	// bots have no client DLL and we may want a bot to execute a client command, we had to 
+	// implement a g_argv string in the bot DLL for holding the bots' commands, and also keep 
+	// track of the argument count. Hence this hook not to let the engine ask an unexistent client 
+	// DLL for a command we are holding here. Of course, real clients commands are still retrieved 
+	// the normal way, by asking the engine. 
+#ifdef RCBOT_META_BUILD
+	if (gBotGlobals.m_bIsFakeClientCommand) {
+		RETURN_META_VALUE(MRES_SUPERCEDE, gBotGlobals.m_iFakeArgCount);
+	}
+
+	RETURN_META_VALUE(MRES_IGNORED, 0);
+#else
+	// is this a bot issuing that client command ? 
+	if (gBotGlobals.m_bIsFakeClientCommand)
+		return (gBotGlobals.m_iFakeArgCount); // if so, then return the argument count we know 
+
+	return ((*g_engfuncs.pfnCmd_Argc) ()); // ask the engine how many arguments there are 
+#endif
+
+}
+
+const char* pfnCmd_Args(void)
+{
+	// this function returns a pointer to the whole current client command string. Since bots 
+	// have no client DLL and we may want a bot to execute a client command, we had to implement 
+	// a g_argv string in the bot DLL for holding the bots' commands, and also keep track of the 
+	// argument count. Hence this hook not to let the engine ask an unexistent client DLL for a 
+	// command we are holding here. Of course, real clients commands are still retrieved the 
+	// normal way, by asking the engine. 
+
+	extern char* g_argv;
+
+	// is this a bot issuing that client command ? 
+	if (gBotGlobals.m_bIsFakeClientCommand)
+	{
+#ifdef RCBOT_META_BUILD
+		// is it a "say" or "say_team" client command ? 
+		if (strncmp("say ", g_argv, 4) == 0) {
+			RETURN_META_VALUE(MRES_SUPERCEDE, &g_argv[0] + 4); // skip the "say" bot client command (bug in HL engine) 
+		}
+		else if (strncmp("say_team ", g_argv, 9) == 0) {
+			RETURN_META_VALUE(MRES_SUPERCEDE, &g_argv[0] + 9); // skip the "say_team" bot client command (bug in HL engine) 
+		}
+		RETURN_META_VALUE(MRES_SUPERCEDE, &g_argv[0]); // else return the whole bot client command string we know 
+#else
+		// is it a "say" or "say_team" client command ? 
+		if (strncmp("say ", g_argv, 4) == 0)
+			return (&g_argv[0] + 4); // skip the "say" bot client command (bug in HL engine) 
+		else if (strncmp("say_team ", g_argv, 9) == 0)
+			return (&g_argv[0] + 9); // skip the "say_team" bot client command (bug in HL engine) 
+
+		return (&g_argv[0]); // else return the whole bot client command string we know 
+#endif
+	}
+
+#ifdef RCBOT_META_BUILD
+	RETURN_META_VALUE(MRES_IGNORED, NULL);
+#else
+	return ((*g_engfuncs.pfnCmd_Args) ()); // ask the client command string to the engine 
+#endif
+
+}
+
+const char* pfnCmd_Argv(int argc)
+{
+	// this function returns a pointer to a certain argument of the current client command. Since 
+	// bots have no client DLL and we may want a bot to execute a client command, we had to 
+	// implement a g_argv string in the bot DLL for holding the bots' commands, and also keep 
+	// track of the argument count. Hence this hook not to let the engine ask an unexistent client 
+	// DLL for a command we are holding here. Of course, real clients commands are still retrieved 
+	// the normal way, by asking the engine.
+
+	extern char* g_argv;
+
+
+#ifdef RCBOT_META_BUILD
+	if (gBotGlobals.m_bIsFakeClientCommand)
+	{
+		RETURN_META_VALUE(MRES_SUPERCEDE, GetArg(g_argv, argc));
+	}
+	else
+	{
+		RETURN_META_VALUE(MRES_IGNORED, NULL);
+		//return ((*g_engfuncs.pfnCmd_Argv) (argc));    
+	}
+#else
+	// is this a bot issuing that client command ? 
+	if (gBotGlobals.m_bIsFakeClientCommand)
+		return (GetArg(g_argv, argc)); // if so, then return the wanted argument we know 
+
+	return ((*g_engfuncs.pfnCmd_Argv) (argc)); // ask the argument number "argc" to the engine 
+#endif
+}
+
+const char* GetArg(const char* command, int arg_number)
+{
+	// the purpose of this function is to provide fakeclients (bots) with the same Cmd_Argv 
+	// convenience the engine provides to real clients. This way the handling of real client 
+	// commands and bot client commands is exactly the same, just have a look in engine.cpp 
+	// for the hooking of pfnCmd_Argc, pfnCmd_Args and pfnCmd_Argv, which redirects the call 
+	// either to the actual engine functions (when the caller is a real client), either on 
+	// our function here, which does the same thing, when the caller is a bot. 
+
+	int length, i, index = 0, arg_count = 0, fieldstart, fieldstop;
+
+	// multiple buffers are used in case the calling DLL saves args in multiple variables and
+	// expects them to point to unique memory areas. (say command processing in Sven Co-op does this)
+	static char arg[128][1024];
+	int argidx = arg_number % 128;
+
+	//	if ( arg_number == 0 )
+	arg[argidx][0] = 0; // reset arg 
+
+	if (!command || !*command)
+		return NULL;
+
+	length = strlen(command); // get length of command 
+
+	// while we have not reached end of line 
+	while ((index < length) && (arg_count <= arg_number))
+	{
+		while ((index < length) && (command[index] == ' '))
+			index++; // ignore spaces 
+
+		// is this field multi-word between quotes or single word ? 
+		if (command[index] == '"')
+		{
+			index++; // move one step further to bypass the quote 
+			fieldstart = index; // save field start position 
+			while ((index < length) && (command[index] != '"'))
+				index++; // reach end of field 
+			fieldstop = index - 1; // save field stop position 
+			index++; // move one step further to bypass the quote 
+		}
+		else
+		{
+			fieldstart = index; // save field start position 
+			while ((index < length) && (command[index] != ' '))
+				index++; // reach end of field 
+			fieldstop = index - 1; // save field stop position 
+		}
+
+		// is this argument we just processed the wanted one ? 
+		if (arg_count == arg_number)
+		{
+			for (i = fieldstart; i <= fieldstop; i++)
+				arg[argidx][i - fieldstart] = command[i]; // store the field value in a string 
+			arg[argidx][i - fieldstart] = 0; // terminate the string 
+		}
+
+		arg_count++; // we have processed one argument more 
+	}
+
+	return (&arg[argidx][0]); // returns the wanted argument 
+}
+
+
 int DispatchSpawn(edict_t* pent)
 {
 	if (gpGlobals->deathmatch)
@@ -524,18 +684,12 @@ void ClientCommand(edict_t* pEntity)
 	}
 	else
 	{
-		// duplicate strings for bot client commands
-		// TODO: w00t disabled
-		println("Ignored fake bot command");
-		RETURN_META(MRES_IGNORED);
-		/*
 		pcmd = strdup(pfnCmd_Argv(0));
 		arg1 = strdup(pfnCmd_Argv(1));
 		arg2 = strdup(pfnCmd_Argv(2));
 		arg3 = strdup(pfnCmd_Argv(3));
 		arg4 = strdup(pfnCmd_Argv(4));
 		arg5 = strdup(pfnCmd_Argv(5));
-		*/
 	}
 
 	eBotCvarState iState = BOT_CVAR_CONTINUE;
@@ -605,9 +759,8 @@ void ClientCommand(edict_t* pEntity)
 
 					if (bSenderIsBot)
 					{
-						// TODO: w00t disabled
-						//CmdArgv_func = pfnCmd_Argv;
-						//iArgCount = pfnCmd_Argc();
+						CmdArgv_func = pfnCmd_Argv;
+						iArgCount = pfnCmd_Argc();
 					}
 					else
 					{
@@ -1482,161 +1635,7 @@ const char* pfnGetPlayerAuthId(edict_t* e)
 #endif
 }
 
-int pfnCmd_Argc(void)
-{
-	// this function returns the number of arguments the current client command string has. Since 
-	// bots have no client DLL and we may want a bot to execute a client command, we had to 
-	// implement a g_argv string in the bot DLL for holding the bots' commands, and also keep 
-	// track of the argument count. Hence this hook not to let the engine ask an unexistent client 
-	// DLL for a command we are holding here. Of course, real clients commands are still retrieved 
-	// the normal way, by asking the engine. 
-#ifdef RCBOT_META_BUILD    
-	if (gBotGlobals.m_bIsFakeClientCommand)
-		RETURN_META_VALUE(MRES_SUPERCEDE, gBotGlobals.m_iFakeArgCount);
-
-	RETURN_META_VALUE(MRES_IGNORED, 0);
-#else
-	// is this a bot issuing that client command ? 
-	if (gBotGlobals.m_bIsFakeClientCommand)
-		return (gBotGlobals.m_iFakeArgCount); // if so, then return the argument count we know 
-
-	return ((*g_engfuncs.pfnCmd_Argc) ()); // ask the engine how many arguments there are 
-#endif
-
-}
-
-const char* pfnCmd_Args(void)
-{
-	// this function returns a pointer to the whole current client command string. Since bots 
-	// have no client DLL and we may want a bot to execute a client command, we had to implement 
-	// a g_argv string in the bot DLL for holding the bots' commands, and also keep track of the 
-	// argument count. Hence this hook not to let the engine ask an unexistent client DLL for a 
-	// command we are holding here. Of course, real clients commands are still retrieved the 
-	// normal way, by asking the engine. 
-
-	extern char* g_argv;
-
-	// is this a bot issuing that client command ? 
-	if (gBotGlobals.m_bIsFakeClientCommand)
-	{
-#ifdef RCBOT_META_BUILD
-		// is it a "say" or "say_team" client command ? 
-		if (strncmp("say ", g_argv, 4) == 0)
-			RETURN_META_VALUE(MRES_SUPERCEDE, &g_argv[0] + 4); // skip the "say" bot client command (bug in HL engine) 
-		else if (strncmp("say_team ", g_argv, 9) == 0)
-			RETURN_META_VALUE(MRES_SUPERCEDE, &g_argv[0] + 9); // skip the "say_team" bot client command (bug in HL engine) 
-
-		RETURN_META_VALUE(MRES_SUPERCEDE, &g_argv[0]); // else return the whole bot client command string we know 
-#else
-		// is it a "say" or "say_team" client command ? 
-		if (strncmp("say ", g_argv, 4) == 0)
-			return (&g_argv[0] + 4); // skip the "say" bot client command (bug in HL engine) 
-		else if (strncmp("say_team ", g_argv, 9) == 0)
-			return (&g_argv[0] + 9); // skip the "say_team" bot client command (bug in HL engine) 
-
-		return (&g_argv[0]); // else return the whole bot client command string we know 
-#endif
-	}
-
-#ifdef RCBOT_META_BUILD
-	RETURN_META_VALUE(MRES_IGNORED, NULL);
-#else
-	return ((*g_engfuncs.pfnCmd_Args) ()); // ask the client command string to the engine 
-#endif
-
-}
-
-const char* pfnCmd_Argv(int argc)
-{
-	// this function returns a pointer to a certain argument of the current client command. Since 
-	// bots have no client DLL and we may want a bot to execute a client command, we had to 
-	// implement a g_argv string in the bot DLL for holding the bots' commands, and also keep 
-	// track of the argument count. Hence this hook not to let the engine ask an unexistent client 
-	// DLL for a command we are holding here. Of course, real clients commands are still retrieved 
-	// the normal way, by asking the engine.
-
-	extern char* g_argv;
-
-
-#ifdef RCBOT_META_BUILD
-	if (gBotGlobals.m_bIsFakeClientCommand)
-	{
-		RETURN_META_VALUE(MRES_SUPERCEDE, GetArg(g_argv, argc));
-	}
-	else
-	{
-		RETURN_META_VALUE(MRES_IGNORED, NULL);
-		//return ((*g_engfuncs.pfnCmd_Argv) (argc));    
-	}
-#else
-	// is this a bot issuing that client command ? 
-	if (gBotGlobals.m_bIsFakeClientCommand)
-		return (GetArg(g_argv, argc)); // if so, then return the wanted argument we know 
-
-	return ((*g_engfuncs.pfnCmd_Argv) (argc)); // ask the argument number "argc" to the engine 
-#endif
-}
-
-const char* GetArg(const char* command, int arg_number)
-{
-	// the purpose of this function is to provide fakeclients (bots) with the same Cmd_Argv 
-	// convenience the engine provides to real clients. This way the handling of real client 
-	// commands and bot client commands is exactly the same, just have a look in engine.cpp 
-	// for the hooking of pfnCmd_Argc, pfnCmd_Args and pfnCmd_Argv, which redirects the call 
-	// either to the actual engine functions (when the caller is a real client), either on 
-	// our function here, which does the same thing, when the caller is a bot. 
-
-	int length, i, index = 0, arg_count = 0, fieldstart, fieldstop;
-
-	static char arg[1024];
-
-	//	if ( arg_number == 0 )
-	arg[0] = 0; // reset arg 
-
-	if (!command || !*command)
-		return NULL;
-
-	length = strlen(command); // get length of command 
-
-	// while we have not reached end of line 
-	while ((index < length) && (arg_count <= arg_number))
-	{
-		while ((index < length) && (command[index] == ' '))
-			index++; // ignore spaces 
-
-		// is this field multi-word between quotes or single word ? 
-		if (command[index] == '"')
-		{
-			index++; // move one step further to bypass the quote 
-			fieldstart = index; // save field start position 
-			while ((index < length) && (command[index] != '"'))
-				index++; // reach end of field 
-			fieldstop = index - 1; // save field stop position 
-			index++; // move one step further to bypass the quote 
-		}
-		else
-		{
-			fieldstart = index; // save field start position 
-			while ((index < length) && (command[index] != ' '))
-				index++; // reach end of field 
-			fieldstop = index - 1; // save field stop position 
-		}
-
-		// is this argument we just processed the wanted one ? 
-		if (arg_count == arg_number)
-		{
-			for (i = fieldstart; i <= fieldstop; i++)
-				arg[i - fieldstart] = command[i]; // store the field value in a string 
-			arg[i - fieldstart] = 0; // terminate the string 
-		}
-
-		arg_count++; // we have processed one argument more 
-	}
-
-	return (&arg[0]); // returns the wanted argument 
-}
-
-void PluginInit() {  
+void PluginInit() {
     CVAR_REGISTER(&bot_ver_cvar);
 
     REG_SVR_COMMAND(BOT_COMMAND_ACCESS, RCBot_ServerCommand);
