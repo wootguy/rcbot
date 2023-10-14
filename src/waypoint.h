@@ -52,7 +52,7 @@
 
 #include "generic_class.h"
 
-#define MAX_WPT_LOCATIONS 32
+#define MAX_WPT_LOCATIONS 64
 #define MAX_WPT_LOC 31
 
 class CWaypointLocations

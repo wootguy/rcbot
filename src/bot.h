@@ -2862,7 +2862,7 @@ private:
 
 	CTypeVector<short int>  m_vLastSeeEnemyPosition;
 	// use short ints, only need from -4096 to + 4096, 
-	// dont need to bother with much precision so use ints for less memory!	
+	// dont need to bother with much precision so use ints for less memory!
 
 	float m_fNextUseSayMessage;
 	float m_fNextCheckCover;

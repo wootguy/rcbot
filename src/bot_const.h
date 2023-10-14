@@ -1047,6 +1047,7 @@ typedef enum
 
 //#define BOT_WAYPOINT_TOUCH_DIST(pev) max36.0pev->absmin.z
 #define BOT_WAYPOINT_TOUCH_DIST		32.0
+#define BOT_WAYPOINT_EDIT_DIST		128.0
 
 #define BOT_DEFAULT_NAME "RCBot"
 ///////////////////////////////////////////////////////////////////////////////////

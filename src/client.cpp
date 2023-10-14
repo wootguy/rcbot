@@ -376,7 +376,7 @@ void InitMessage ( const char *message );
 
 		/////////////////////////////////////////////////////////////////
 		// GET ALL INFO NEEDED...
-		m_fWaypointDisplayTime = gpGlobals->time + 1.0;
+		m_fWaypointDisplayTime = gpGlobals->time + 0.1;
 		
 		pPlayer = GetPlayer();
 
@@ -390,7 +390,7 @@ void InitMessage ( const char *message );
 		
 		if ( m_bWaypointPathsOn )
 		{
-			iCurrentWaypoint = WaypointLocations.NearestWaypoint(vOrigin,BOT_WAYPOINT_TOUCH_DIST,-1);
+			iCurrentWaypoint = WaypointLocations.NearestWaypoint(vOrigin, BOT_WAYPOINT_EDIT_DIST,-1);
 			
 			if ( iCurrentWaypoint != -1 )
 				m_iCurrentWaypoint = iCurrentWaypoint;
