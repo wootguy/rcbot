@@ -68,12 +68,6 @@
 
 // BOT GLOBALS
 
-// engine functions
-extern DLL_FUNCTIONS 
-
-
-;
-
 // quick waypoint access
 extern CWaypointLocations WaypointLocations;
 
@@ -6402,7 +6396,8 @@ BOOL CBot :: UpdateVisibles ( void )
 	if ( pos != NULL )
 	{
 		// quick visible checking
-		pvs = ENGINE_SET_PVS ( (float *)&(pos->getVector()) );
+		Vector posv = pos->getVector();
+		pvs = ENGINE_SET_PVS ( posv );
 
 		if( ENGINE_CHECK_VISIBILITY(m_pEdict,pvs) )
 		{

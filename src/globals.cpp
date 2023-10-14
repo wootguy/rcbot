@@ -1198,7 +1198,7 @@ void CBotGlobals :: KeyValue ( edict_t *pentKeyvalue, KeyValueData *pkvd )
 		{
 			if (strcmp(pkvd->szKeyName, "team_no") == 0)
 				m_currFlag->setTeam(atoi(pkvd->szValue));
-			else if ( strcmpi(pkvd->szKeyName, "mdl") == 0 )
+			else if ( strcasecmp(pkvd->szKeyName, "mdl") == 0 )
 			{
 				prevFlagInvalid = FALSE;
 			}
