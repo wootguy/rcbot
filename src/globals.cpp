@@ -725,8 +725,54 @@ void CBotGlobals :: StartFrame ( void )
 					//	if ( !IsNS() || pBot->IsMarine() )
 					//	{			
 						
+							if (IsMod(MOD_SVENCOOP)) {
+								// TODO w00t: this is ineffecient
+								//
+								// WeapPickup messages are enough to let the bot know which weapons
+								// it has, but not when it first joins. It needs to die at least once.
+								// There's no message sent when dropping weapons so these checks are
+								// needed anyway. pev->weapons doesn't hold the current weapon bits
+								// in modern versions of Sven Co-op (5.0+?). That info also is not
+								// available in the angelscript APIs, which are used to generate APIs
+								// for metamod.
+								// 
+								// So, if this has to be done, then maybe track added weapons and only
+								// check those ents over time instead of iterating the entire world.
+								// Then fix the WeapPickup messages for joining bots.
+							
+								//println("Cur weapons: %u", pBot->m_iBotWeapons);
+
+								pBot->m_Weapons.RemoveWeapons();
+								pBot->m_iBotWeapons = 0;
+								edict_t* botEnt = pBot->m_pEdict;
+
+								for (int i = gpGlobals->maxClients+1; i < gpGlobals->maxEntities; i++) {
+									edict_t* ent = INDEXENT(i);
+									if (ent && !ent->free && ent->pvPrivateData 
+											&& ent->v.movetype == MOVETYPE_FOLLOW 
+											&& ent->v.aiment == botEnt) 
+									{
+										const char* wepname = STRING(ent->v.classname);
+										if (strstr(wepname, "weapon_") == 0) {
+											continue;
+										}
+
+										CWeapon* wep = m_Weapons.GetWeaponByName(wepname);
+										if (wep == NULL) {
+											//println("Couldn't find %s", wepname);
+											continue;
+										}
+										//println("Found wep: %s id %d", wepname, wep->GetId());
+										int id = wep->GetId();
+
+										pBot->m_iBotWeapons |= 1 << id;
+										pBot->m_Weapons.AddWeapon(id);
+									}
+								}
+							}
+
 							// see if a weapon was dropped...or added...
-							if ( pBot->m_iBotWeapons != pBot->pev->weapons)
+							else if ( pBot->m_iBotWeapons != pBot->pev->weapons)
 							{
 								int j;
 								

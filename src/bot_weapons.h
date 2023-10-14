@@ -506,6 +506,10 @@ public:
 
 	BOOL IsSecondary ( void );
 
+	int GetId() {
+		return m_iId;
+	}
+
 	int m_iAmmoIndex1;
 	int m_iAmmoIndex2;
 
@@ -670,7 +674,22 @@ public:
 			return m_Weapons[iId];
 		}
 		return NULL;
-	}	
+	}
+
+	CWeapon* GetWeaponByName(const char* name)
+	{
+		for (int i = 0; i < MAX_WEAPONS; i++) {
+			if (!m_Weapons[i]) {
+				continue;
+			}
+			const char* wepname = m_Weapons[i]->GetClassname();
+			if (wepname && strcmp(wepname, name) == 0) {
+				return m_Weapons[i];
+			}
+		}
+
+		return NULL;
+	}
 
 private:
 	CWeapon *m_Weapons[MAX_WEAPONS];
