@@ -9830,6 +9830,8 @@ BOOL CBot :: IsEnemy ( edict_t *pEntity )
 				case CLASS_ALIEN_PREY:
 				case CLASS_ALIEN_PREDATOR:
 				case CLASS_HUMAN_MILITARY:
+				case CLASS_XRACE_PITDRONE:
+				case CLASS_XRACE_SHOCK:
 					isEnemyClass = true;
 					break;
 				default:
