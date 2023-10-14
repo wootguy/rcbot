@@ -50,6 +50,8 @@
 #include "generic_class.h"
 #include "bot_const.h"
 
+#undef GetMessage
+
 // net message write types
 typedef enum
 {

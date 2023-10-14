@@ -9801,64 +9801,60 @@ BOOL CBot :: IsEnemy ( edict_t *pEntity )
 			
 			if ( pEnemypev->flags & FL_MONSTER )
 			{
-				// TODO: w00t disabled
 				CBaseEntity *pEnt = (CBaseEntity*)GET_PRIVATE(pEntity);
-				bool isAlly = false; //pEnt->m_fPlayerAlly
-				
-				if ( !isAlly )
-				{
-					int iClass = pEnt->Classify();
+				int iClass = pEnt->Classify();
+				bool isEnemyClass = false;
 
-					switch ( iClass )
+				switch ( iClass )
+				{
+				case CLASS_NONE:				
+				case CLASS_PLAYER:
+				case CLASS_HUMAN_PASSIVE:
+				case CLASS_INSECT:
+				case CLASS_PLAYER_ALLY:
+				case CLASS_PLAYER_BIOWEAPON: // hornets and snarks.launched by players
+				case CLASS_ALIEN_BIOWEAPON:		
 					{
-					case CLASS_NONE:				
-					case CLASS_PLAYER:
-					case CLASS_HUMAN_PASSIVE:
-					case CLASS_INSECT:
-					case CLASS_PLAYER_ALLY:
-						//if ( UTIL_FriendlyHatesPlayer(pEntity,m_pEdict) )
-						//	return TRUE;
-					case CLASS_PLAYER_BIOWEAPON: // hornets and snarks.launched by players
-					case CLASS_ALIEN_BIOWEAPON:		
+					isEnemyClass = false;
+					break;
+					}
+				case CLASS_MACHINE:
+					{
+						if ( FStrEq("monster_turret",szClassname) )
 						{
-						return FALSE;
-						}																 
-					case CLASS_MACHINE:
-						{
-							if ( FStrEq("monster_turret",szClassname) )
-							{
-								if ( !pEnemypev->sequence )
-									return FALSE;
-							}
-							return TRUE;
-						}
-					case CLASS_ALIEN_PASSIVE:
-					case CLASS_BARNACLE:
-					case CLASS_ALIEN_MILITARY:
-					case CLASS_ALIEN_MONSTER:
-					case CLASS_ALIEN_PREY:
-					case CLASS_ALIEN_PREDATOR:
-					case CLASS_HUMAN_MILITARY:
-						return TRUE;		
-					default:
+							if (!pEnemypev->sequence)
+								isEnemyClass = false;
+						} else
+							isEnemyClass = true;
 						break;
 					}
-
-					if ( FStrEq(szClassname,"monster_generic") )
-						return FALSE;	
-					else if ( FStrEq(szClassname,"monster_tentacle") ) // tentacle things dont die
-						return FALSE;
-					else if ( FStrEq(szClassname,"monster_furniture") )
-						return FALSE;
-					else if ( FStrEq(szClassname,"monster_leech") )
-						return FALSE;
-					else if ( FStrEq(szClassname,"monster_cockroach") )
-						return FALSE;
-						
-					return TRUE;
+				case CLASS_ALIEN_PASSIVE:
+				case CLASS_BARNACLE:
+				case CLASS_ALIEN_MILITARY:
+				case CLASS_ALIEN_MONSTER:
+				case CLASS_ALIEN_PREY:
+				case CLASS_ALIEN_PREDATOR:
+				case CLASS_HUMAN_MILITARY:
+					isEnemyClass = true;
+					break;
+				default:
+					break;
 				}
 
+				if (isEnemyClass) {
+					if (FStrEq(szClassname, "monster_generic"))
+						return FALSE;
+					else if (FStrEq(szClassname, "monster_tentacle")) // tentacle things dont die
+						return FALSE;
+					else if (FStrEq(szClassname, "monster_furniture"))
+						return FALSE;
+					else if (FStrEq(szClassname, "monster_leech"))
+						return FALSE;
+					else if (FStrEq(szClassname, "monster_cockroach"))
+						return FALSE;
 
+					return TRUE;
+				}
 
 				return FALSE;
 			
