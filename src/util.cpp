@@ -2690,7 +2690,7 @@ void BotFunc_WriteProfile(FILE* fp, bot_profile_t* bpBotProfile)
 
 	bpBotProfile->m_Rep.SaveAllRep(bpBotProfile->m_iProfileId);
 
-	SaveHALBrainForPersonality(bpBotProfile);
+	bpBotProfile->m_HAL->save_model();
 }
 
 void BotFunc_ReadProfile(FILE* fp, bot_profile_t* bpBotProfile)
@@ -2891,8 +2891,7 @@ void BotFunc_ReadProfile(FILE* fp, bot_profile_t* bpBotProfile)
 		}
 	}
 
-	bPreTrain = PrepareHALBrainForPersonality(bpBotProfile); // check the bot HAL brain
-	LoadHALBrainForPersonality(bpBotProfile, bPreTrain); // wake the bot's HAL brain up
+	LoadHALBrainForPersonality(bpBotProfile); // wake the bot's HAL brain up
 
 	// Also read bots rep with other players on the server
 

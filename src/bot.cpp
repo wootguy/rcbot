@@ -55,7 +55,6 @@
 #include "bot_weapons.h"
 #include "perceptron.h"
 #include "bot_visibles.h"
-//#include "megahal.h"
 #include "actionutility.h"
 
 #include "usercmd.h"
@@ -1214,11 +1213,7 @@ void CBot :: FreeLocalMemory ( void )
 	
 	if ( m_Profile.m_HAL )
 	{
-		FreeHALBrain(&m_Profile);
-
-		if ( m_Profile.m_HAL != NULL )
-			free(m_Profile.m_HAL);
-
+		delete m_Profile.m_HAL;
 		m_Profile.m_HAL = NULL;
 	}
 }

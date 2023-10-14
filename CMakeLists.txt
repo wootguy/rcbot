@@ -11,6 +11,7 @@ set(SOURCE_FILES
 	src/bits.h src/bits.cpp
 	src/bot.h src/bot.cpp
 	src/bot_builder.h
+	src/bot_chat.h src/bot_chat.cpp
 	src/bot_client.h src/bot_client.cpp
 	src/bot_combat.cpp
 	src/bot_commands.cpp

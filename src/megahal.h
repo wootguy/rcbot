@@ -1,151 +1,171 @@
 /*
- *    This file is part of RCBot.
+ *  Copyright (C) 1998 Jason Hutchens
  *
- *    RCBot by Paul Murphy adapted from botman's template 3.
+ *  This program is free software; you can redistribute it and/or modify it
+ *  under the terms of the GNU General Public License as published by the Free
+ *  Software Foundation; either version 2 of the license or (at your option)
+ *  any later version.
  *
- *    RCBot is free software; you can redistribute it and/or modify it
- *    under the terms of the GNU General Public License as published by the
- *    Free Software Foundation; either version 2 of the License, or (at
- *    your option) any later version.
+ *  This program is distributed in the hope that it will be useful, but
+ *  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ *  or FITNESS FOR A PARTICULAR PURPOSE.  See the Gnu Public License for more
+ *  details.
  *
- *    RCBot is distributed in the hope that it will be useful, but
- *    WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License
- *    along with RCBot; if not, write to the Free Software Foundation,
- *    Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- *    In addition, as a special exception, the author gives permission to
- *    link the code of this program with the Half-Life Game Engine ("HL
- *    Engine") and Modified Game Libraries ("MODs") developed by Valve,
- *    L.L.C ("Valve").  You must obey the GNU General Public License in all
- *    respects for all of the code used other than the HL Engine and MODs
- *    from Valve.  If you modify this file, you may extend this exception
- *    to your version of the file, but you are not obligated to do so.  If
- *    you do not wish to do so, delete this exception statement from your
- *    version.
- *
+ *  You should have received a copy of the GNU General Public License along
+ *  with this program; if not, write to the Free Software Foundation, Inc.,
+ *  675 Mass Ave, Cambridge, MA 02139, USA.
+ * 
+ *  Oct 2023 - Modified by wootguy
  */
-#ifndef _MEGAHAL_H_
-#define _MEGAHAL_H_
 
-// HAL-related structure definitions
-typedef struct
-{
-   unsigned char length; // length of word (for quick access)
-   char *word; // the string itself
-} HAL_STRING;
+#pragma once
+#include <string>
 
+struct HAL_STRING {
+    uint8_t length;
+    char* word;
+};
 
-typedef struct
-{
-   unsigned long size; // size of dictionary (for quick access)
-   HAL_STRING *entry; // string entry at this position of the dictionary
-   unsigned short *index; // pointer to index
-} HAL_DICTIONARY;
+struct HAL_DICTIONARY  {
+    uint32_t size;
+    HAL_STRING* entry;
+    uint16_t* index;
+};
 
+struct HAL_TREE {
+    uint16_t symbol;
+    uint32_t usage;
+    uint16_t count;
+    uint16_t branch;
+    HAL_TREE** tree;
+};
 
-typedef struct
-{
-   unsigned short size; // size of the word swap structure
-   HAL_STRING *from; // word to be changed into the next
-   HAL_STRING *to; // word for replacing the previous
-} HAL_SWAP;
+struct HAL_MODEL {
+    uint8_t order;
+    HAL_TREE* forward;
+    HAL_TREE* backward;
+    HAL_TREE** context;
+    HAL_DICTIONARY* dictionary;
+};
 
+struct HAL_SWAP {
+    uint16_t size;
+    HAL_STRING* from;
+    HAL_STRING* to;
+};
 
-typedef struct HAL_NODE
-{
-   unsigned short symbol; // symbol ID
-   unsigned long usage; // usage information
-   unsigned short count; // usage count (?)
-   unsigned short branch; // branch of the tree
-   struct HAL_NODE **tree; // pointer to tree node pointer
-} HAL_TREE;
+// UTF-8 characters can be up to 4-bytes long
+#define HAL_MAX_REPLY_LEN (128*4)
 
+// fallback paths for when individual personality files don't exist
+#define HAL_COMMON_SWP "common_hal.swp"
+#define HAL_COMMON_BAN "common_hal.ban"
+#define HAL_COMMON_AUX "common_hal.aux"
+#define HAL_COMMON_TRN "common_hal.trn"
 
-typedef struct
-{
-   unsigned char order; // model order (complexity)
-   HAL_TREE *forward; // pointer to the model's forward tree
-   HAL_TREE *backward; // pointer to the model's backwards tree
-   HAL_TREE **context; // pointer to context tree pointer
-   HAL_DICTIONARY *dictionary; // pointer to the model's dictionary
-} HAL_MODEL;
+class MegaHal {
+public:
+    ~MegaHal();
 
-typedef struct
-{
-   HAL_DICTIONARY *banned_keywords; // dictionary of words that must never be used as keywords
-   HAL_DICTIONARY *auxiliary_keywords; // dictionary of auxiliary keywords
-   HAL_SWAP *swappable_keywords; // array of swappable keywords with their equivalences
-   HAL_MODEL *bot_model; // Markov model of the bot
-   HAL_DICTIONARY *input_words; // global chat's dictionary of words
-//   HAL_DICTIONARY *bot_words; // bot's own dictionary of words
-   BOOL keyword_is_used;
-} HAL_bot_t;
+    // Initialize various brains and files.
+    // brn/trn/ban/aux/swp files with the path prefix will be loaded if they exist,
+    // otherwise the fallback paths will be used (HAL_COMMON_*).
+    // A .brn file will be created if none exists and a .trn was used.
+    // path = file path to a .brn file without the .brn extension.
+    void load_personality(const char* path);
 
-// bot HAL Markov model order
-#define BOT_HAL_MODEL_ORDER 5
+    // Take string as input, and return allocated string as output.
+    // string memory belongs to the class
+	char* do_reply(char* input, bool learnFromInput);
 
-#ifndef CBot
-class CBot;
-#endif
+    // Take string as input, update model but don't generate reply.
+	void learn_no_reply(char* input);
 
-void HumanizeString ( char *string );
-void RemoveNameTags ( const char *in_string, char *out_string );
+    // Save the current state to a MegaHAL brain file.
+	void save_model();
 
-void BotChat (CBot *pBot);
-void BotSayText (CBot *pBot);
-void BotSayAudio (CBot *pBot);
-void BotTalk (CBot *pBot, char *sound_path);
+    // rapidly learn from a text file containing chat messages seperated by newlines
+    void train(const char* path);
 
-void FreeHALBrain ( struct bot_profile_s *pBotProfile );
-void HAL_LoadTree (FILE *file, HAL_TREE *node);
-void HAL_LoadDictionary (FILE *file, HAL_DICTIONARY *dictionary);
-void HAL_SaveTree (FILE *file, HAL_TREE *node);
-void HAL_SaveDictionary (FILE *file, HAL_DICTIONARY *dictionary);
-void HAL_Learn (HAL_MODEL *model, HAL_DICTIONARY *words);
-unsigned short HAL_AddWord (HAL_DICTIONARY *dictionary, HAL_STRING word);
-int HAL_SearchDictionary (HAL_DICTIONARY *dictionary, HAL_STRING word, BOOL *find);
-unsigned short HAL_FindWord (HAL_DICTIONARY *dictionary, HAL_STRING word);
-int HAL_CompareWords (HAL_STRING word1, HAL_STRING word2);
-void HAL_InitializeDictionary (HAL_DICTIONARY *dictionary);
-HAL_DICTIONARY *HAL_NewDictionary (void);
-HAL_TREE *HAL_NewNode (void);
-HAL_MODEL *HAL_NewModel (int order);
-void HAL_UpdateModel (HAL_MODEL *model, int symbol);
-void HAL_UpdateContext (HAL_MODEL *model, int symbol);
-HAL_TREE *HAL_AddSymbol (HAL_TREE *tree, unsigned short symbol);
-HAL_TREE *HAL_FindSymbol (HAL_TREE *node, int symbol);
-HAL_TREE *HAL_FindSymbolAdd (HAL_TREE *node, int symbol);
-void HAL_AddNode (HAL_TREE *tree, HAL_TREE *node, int position);
-int HAL_SearchNode (HAL_TREE *node, int symbol, BOOL *found_symbol);
-void HAL_InitializeContext (HAL_MODEL *model);
-void BotHALTrainModel (CBot *pBot, HAL_MODEL *model);
-void HAL_ShowDictionary (HAL_DICTIONARY *dictionary);
-void HAL_MakeWords (char *input, HAL_DICTIONARY *words);
-void BotHALGenerateReply (CBot *pBot, char *output);
-BOOL HAL_BoundaryExists (char *string, int position);
-void BotChatReply ( CBot *pBot, char *szMsg, edict_t *pSender, char *szReplyMsg );
-BOOL HAL_DictionariesDiffer (HAL_DICTIONARY *words1, HAL_DICTIONARY *words2);
-HAL_DICTIONARY *BotHALMakeKeywords (CBot *pBot, HAL_DICTIONARY *words);
-void BotHALAddKeyword (CBot *pBot, HAL_DICTIONARY *keys, HAL_STRING word);
-void BotHALAddAuxiliaryKeyword (CBot *pBot, HAL_DICTIONARY *keys, HAL_STRING word);
-HAL_DICTIONARY *BotHALBuildReplyDictionary (CBot *pBot, HAL_DICTIONARY *keys);
-int BotHALBabble (CBot *pBot, HAL_DICTIONARY *keys, HAL_DICTIONARY *words);
-BOOL HAL_WordExists (HAL_DICTIONARY *dictionary, HAL_STRING word);
-int BotHALSeedReply (CBot *pBot, HAL_DICTIONARY *keys);
-HAL_SWAP *HAL_NewSwap (void);
-void HAL_AddSwap (HAL_SWAP *list, char *s, char *d);
-HAL_SWAP *HAL_InitializeSwap (char *filename);
-HAL_DICTIONARY *HAL_InitializeList (char *filename);
-void HAL_EmptyDictionary (HAL_DICTIONARY *dictionary);
-void HAL_FreeModel (HAL_MODEL *model);
-void HAL_FreeTree (HAL_TREE *tree);
-void HAL_FreeSwap (HAL_SWAP *swap);
-BOOL PrepareHALBrainForPersonality (struct bot_profile_s *pBotProfile);
-BOOL LoadHALBrainForPersonality (struct bot_profile_s *pBotProfile, BOOL bPreTrain);
-void SaveHALBrainForPersonality (struct bot_profile_s *pBotProfile);
+    // writes the model dictionary to a .dic file (same dir as the .brn) for training purposes
+    void write_dictionary();
 
-#endif
+private:
+    int order = 5;
+
+    // increase for more "surprising" replies.
+    // 32768 is a slow but sane max, most improvements are made below 256 iterations.
+    // a low count of iterations seems to prevent the same messages being repeated with a large data set.
+    int reply_iterations = 16;
+
+    char replyBuffer[HAL_MAX_REPLY_LEN];
+
+    HAL_DICTIONARY* words = NULL;
+    HAL_MODEL* model = NULL;
+
+    HAL_DICTIONARY* ban = NULL;
+    HAL_DICTIONARY* aux = NULL;
+    HAL_SWAP* swp = NULL;
+    bool used_key = false;
+
+	std::string brnpath;
+
+    void add_aux(HAL_MODEL*, HAL_DICTIONARY*, HAL_STRING);
+    void add_key(HAL_MODEL*, HAL_DICTIONARY*, HAL_STRING);
+    void add_node(HAL_TREE*, HAL_TREE*, int);
+    void add_swap(HAL_SWAP*, char*, char*);
+    HAL_TREE* add_symbol(HAL_TREE*, uint16_t);
+    uint16_t add_word(HAL_DICTIONARY*, HAL_STRING);
+    int babble(HAL_MODEL*, HAL_DICTIONARY*, HAL_DICTIONARY*);
+    bool boundary(char*, int);
+    void capitalize(char*);
+    bool dissimilar(HAL_DICTIONARY*, HAL_DICTIONARY*);
+    void error(char*, char*, ...);
+    float evaluate_reply(HAL_MODEL*, HAL_DICTIONARY*, HAL_DICTIONARY*);
+    HAL_TREE* find_symbol(HAL_TREE*, int);
+    HAL_TREE* find_symbol_add(HAL_TREE*, int);
+    uint16_t find_word(HAL_DICTIONARY*, HAL_STRING);
+    char* generate_reply(HAL_MODEL*, HAL_DICTIONARY*);
+    void learn(HAL_MODEL*, HAL_DICTIONARY*);
+    void make_words(char*, HAL_DICTIONARY*);
+    HAL_DICTIONARY* new_dictionary(void);
+
+    void upper(char*);
+
+    void free_dictionary(HAL_DICTIONARY*);
+    void free_model(HAL_MODEL*);
+    void free_tree(HAL_TREE*);
+    void free_word(HAL_STRING);
+    void free_words(HAL_DICTIONARY*);
+    void free_swap(HAL_SWAP* swap);
+    void initialize_context(HAL_MODEL*);
+    void initialize_dictionary(HAL_DICTIONARY*);
+    HAL_DICTIONARY* initialize_list(const char*);
+    HAL_SWAP* initialize_swap(const char*);
+    void load_dictionary(FILE*, HAL_DICTIONARY*);
+    bool load_model(const char*, HAL_MODEL*);
+    void load_tree(FILE*, HAL_TREE*);
+    void load_word(FILE*, HAL_DICTIONARY*);
+    HAL_DICTIONARY* make_keywords(HAL_MODEL*, HAL_DICTIONARY*);
+    char* make_output(HAL_DICTIONARY*);
+    HAL_MODEL* new_model(int);
+    HAL_TREE* new_node(void);
+    HAL_SWAP* new_swap(void);
+    HAL_DICTIONARY* reply(HAL_MODEL*, HAL_DICTIONARY*);
+    void save_dictionary(FILE*, HAL_DICTIONARY*);
+    void save_tree(FILE*, HAL_TREE*);
+    void save_word(FILE*, HAL_STRING);
+    int search_dictionary(HAL_DICTIONARY*, HAL_STRING, bool*);
+    int search_node(HAL_TREE*, int, bool*);
+    int seed(HAL_MODEL*, HAL_DICTIONARY*);
+    void update_context(HAL_MODEL*, int);
+    void update_model(HAL_MODEL*, int);
+    bool warn(char*, char*, ...);
+    int wordcmp(HAL_STRING, HAL_STRING);
+    bool word_exists(HAL_DICTIONARY*, HAL_STRING);
+    int rnd(int);
+
+    bool isWordChar(uint8_t c); // is this character part of a word? TODO: unicode support
+    bool isWordSep(uint8_t c); // is this character a compound word separator? ("co-op", "something.com")
+    void free_everything();
+};

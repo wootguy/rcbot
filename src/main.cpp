@@ -556,7 +556,7 @@ void ClientDisconnect(edict_t* pEntity)
 		int iProfileId = pBot->m_Profile.m_iProfileId;
 		int iTeam = pBot->m_Profile.m_iFavTeam;
 
-		SaveHALBrainForPersonality(&pBot->m_Profile); // save this personality's HAL brain
+		pBot->m_Profile.m_HAL->save_model(); // save this personality's HAL brain
 
 		pBot->saveLearnedData();
 		pBot->FreeLocalMemory();
