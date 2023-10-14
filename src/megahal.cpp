@@ -18,6 +18,7 @@
  *  Oct 2023 - Modified by wootguy
  */
 
+#include "mmlib.h"
 #include "megahal.h"
 #include <stdio.h>
 #include <stdarg.h>
@@ -26,8 +27,6 @@
 #include <chrono>
 #include <thread>
 #include <string>
-
-#include "mmlib.h"
 
 using namespace std;
 
