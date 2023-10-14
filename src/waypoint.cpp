@@ -80,9 +80,9 @@ extern CBotGlobals gBotGlobals;
 
 void CWaypointLocations :: getMaxMins ( Vector vOrigin, int &mini, int &minj, int &mink, int &maxi, int &maxj, int &maxk )
 {
-	int iLoc = abs((int)((int)(vOrigin.x + 4096.0) / 256));
-	int jLoc = abs((int)((int)(vOrigin.y + 4096.0) / 256));
-	int kLoc = abs((int)((int)(vOrigin.z + 4096.0) / 256));
+	int iLoc = abs((int)((int)(vOrigin.x + 32768.0) / 1024));
+	int jLoc = abs((int)((int)(vOrigin.y + 32768.0) / 1024));
+	int kLoc = abs((int)((int)(vOrigin.z + 32768.0) / 1024));
 
 	// get current area
 	mini = iLoc-1;
@@ -179,9 +179,9 @@ void CWaypointLocations :: AddWptLocation ( int iIndex, const float *fOrigin )
 {
 // Add a waypoint with index and at origin (for quick insertion in the list)
 //
-	int i = abs((int)((int)(fOrigin[0] + 4096.0) / 256));
-	int j = abs((int)((int)(fOrigin[1] + 4096.0) / 256));
-	int k = abs((int)((int)(fOrigin[2] + 4096.0) / 256));
+	int i = abs((int)((int)(fOrigin[0] + 32768.0) / 1024));
+	int j = abs((int)((int)(fOrigin[1] + 32768.0) / 1024));
+	int k = abs((int)((int)(fOrigin[2] + 32768.0) / 1024));
 
 	m_iLocations[i][j][k].Push(iIndex);
 }
@@ -190,9 +190,9 @@ void CWaypointLocations :: DeleteWptLocation ( int iIndex, const float *fOrigin 
 // Delete the waypoint index at the origin (for finding it quickly in the list)
 //
 {
-	int i = abs((int)((int)(fOrigin[0] + 4096.0) / 256));
-	int j = abs((int)((int)(fOrigin[1] + 4096.0) / 256));
-	int k = abs((int)((int)(fOrigin[2] + 4096.0) / 256));
+	int i = abs((int)((int)(fOrigin[0] + 32768.0) / 1024));
+	int j = abs((int)((int)(fOrigin[1] + 32768.0) / 1024));
+	int k = abs((int)((int)(fOrigin[2] + 32768.0) / 1024));
 
 	m_iLocations[i][j][k].Remove(iIndex);
 }
@@ -516,8 +516,8 @@ BOOL WaypointLoad(edict_t *pEntity)
             {
                fread(&waypoints[i], sizeof(waypoints[0]), 1, bfp);
 
-			   if ( (waypoints[i].origin.x > 4096.0f) || (waypoints[i].origin.y > 4096.0f) || (waypoints[i].origin.z > 4096.0f) || 
-				    (waypoints[i].origin.x < -4096.0f) || (waypoints[i].origin.y < -4096.0f) || (waypoints[i].origin.z < -4096.0f) )
+			   if ( (waypoints[i].origin.x > 32768.0) || (waypoints[i].origin.y > 32768.0) || (waypoints[i].origin.z > 32768.0) ||
+				    (waypoints[i].origin.x < -32768.0) || (waypoints[i].origin.y < -32768.0) || (waypoints[i].origin.z < -32768.0) )
 			   {
 				   BotMessage(pEntity,0,"ERROR!!! Invalid waypoint (id: %d) origin outside map !!!",i);
 				   waypoints[i].flags |= W_FL_DELETED;
@@ -1528,7 +1528,7 @@ void WaypointDrawBeam(edict_t *pEntity, Vector start, Vector end, int width,
    WRITE_SHORT( gBotGlobals.m_iWaypointTexture );
    WRITE_BYTE( 1 ); // framestart
    WRITE_BYTE( 10 ); // framerate
-   WRITE_BYTE( 10 ); // life in 0.1's
+   WRITE_BYTE( 1 ); // life in 0.1's
    WRITE_BYTE( width ); // width
    WRITE_BYTE( noise );  // noise
 
