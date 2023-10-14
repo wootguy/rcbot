@@ -1019,29 +1019,6 @@ void MegaHal::make_words(char *input, HAL_DICTIONARY *words)
 	}
     }
 
-    /*
-     *		If the last word isn't punctuation, then replace it with a
-     *		full-stop character.
-     */
-    if(isWordChar((unsigned char)words->entry[words->size-1].word[0])) {
-	if(words->entry==NULL)
-	    words->entry=(HAL_STRING *)malloc((words->size+1)*sizeof(HAL_STRING));
-	else
-	    words->entry=(HAL_STRING *)realloc(words->entry, (words->size+1)*sizeof(HAL_STRING));
-	if(words->entry==NULL) {
-	    error("make_words", "Unable to reallocate dictionary");
-	    return;
-	}
-
-	words->entry[words->size].length=1;
-	words->entry[words->size].word=".";
-	++words->size;
-    }
-    else if(strchr("!.?", words->entry[words->size-1].word[words->entry[words->size-1].length-1])==NULL) {
-	words->entry[words->size-1].length=1;
-	words->entry[words->size-1].word=".";
-    }
-
     return;
 }
 
