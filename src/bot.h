@@ -59,7 +59,7 @@
 #include "bot_menu.h"
 #include "bot_weapons.h"
 #include "bot_client.h"
-#include "megahal.h"
+#include "bot_chat.h"
 #include "bot_ga.h"
 #include "bits.h"
 #include "nn.h"
@@ -1560,7 +1560,7 @@ typedef struct path {
 ////////////////////////////
 // Bot Profile Info
 
-typedef struct bot_profile_s
+struct bot_profile_t
 {
 	int m_iProfileId;
 
@@ -1601,14 +1601,14 @@ typedef struct bot_profile_s
 	char *m_szHAL_BanFile;
 	char *m_szHAL_SwapFile;
 
-	HAL_bot_t *m_HAL;
+	MegaHal *m_HAL;
 
 	CBotReputations m_Rep;
 
 	int m_iClass;
 
 	char *m_szModel;
-}bot_profile_t;
+};
 
 class CBotFailedPath
 {
