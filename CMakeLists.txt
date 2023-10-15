@@ -74,9 +74,12 @@ if(MSVC)
 	
 	target_link_libraries(${PROJECT_NAME} WS2_32 IPHLPAPI)
 	set(CMAKE_CXX_FLAGS "/w /EHsc")
+	
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 
 else()
-	set(CMAKE_CXX_FLAGS "-Wall -std=c++11 -static-libstdc++ -m32 -g -fvisibility=hidden")
+	set(CMAKE_CXX_FLAGS "-Wall -std=c++11 -static-libstdc++ -static-libgcc -m32 -g -fvisibility=hidden")
 	set(CMAKE_CXX_FLAGS_DEBUG "-O0")
 	set(CMAKE_CXX_FLAGS_RELEASE "-Os -w -Wfatal-errors")
 	target_compile_definitions(${PROJECT_NAME} PUBLIC -Dlinux)
