@@ -235,7 +235,7 @@ void convert_to_rcw(string rcwa_fpath) {
         WAYPOINT wpt;
         wpt.flags = inputWpt.m_iFlags;
         wpt.origin = inputWpt.m_vOrigin;
-        printf("Write waypoint %d, %d at (%d %d %d)\n", i, wpt.flags, (int)wpt.origin.x, (int)wpt.origin.y, (int)wpt.origin.z);
+        //printf("Write waypoint %d, %d at (%d %d %d)\n", i, wpt.flags, (int)wpt.origin.x, (int)wpt.origin.y, (int)wpt.origin.z);
 
         fwrite(&wpt, sizeof(WAYPOINT), 1, outfile);
     }
