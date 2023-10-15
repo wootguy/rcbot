@@ -533,6 +533,9 @@ BOOL WaypointLoad(edict_t *pEntity)
 			   }
 
                num_waypoints++;
+
+			   Vector ori = waypoints[i].origin;
+			   println("READ wpt %d, %d at (%d %d %d)", i, waypoints[i].flags, (int)ori.x, (int)ori.y, (int)ori.z);
             }
 
             // read and add waypoint paths...
@@ -548,6 +551,8 @@ BOOL WaypointLoad(edict_t *pEntity)
                   WaypointAddPath(index, path_index);
                }
             }
+
+			
 
             gBotGlobals.m_bWaypointsHavePaths = TRUE;  // keep track so path can be freed
          }
