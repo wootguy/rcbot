@@ -7,17 +7,15 @@ To maintain compatibility with future releases of Sven Co-op, the private entity
 ## Building the source
 Windows:  
 1. Intall Git for windows, CMake, and Visual Studio 2022 (select "Desktop development with C++")
-2. Update `SVEN_ROOT_PATH` in `CMakeLists.txt` to point to your Sven Co-op folder.
+2. Open a command prompt somewhere and run this command to download the code:
 ```
 git clone --recurse-submodules https://github.com/wootguy/rcbot
-cd rcbot && mkdir build && cd build
-cmake -A Win32 ..
-cmake --build . --config Release
 ```
+3. Open the rcbot folder and run `build.bat`
+
 Linux:
 ```
 git clone --recurse-submodules https://github.com/wootguy/rcbot
-cd rcbot && mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=RELEASE
-make
+cd rcbot
+sh build.sh
 ```
