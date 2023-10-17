@@ -7,6 +7,7 @@
 using namespace std;
 
 #define MAX_WAYPOINTS 1024
+#define W_FILE_FL_READ_VISIBILITY (1<<0) // require to read visibility file
 
 string toLowerCase(string str) {
     string out = str;
@@ -165,6 +166,7 @@ public:
         printf("NUM WPTS = %d\n", number_of_waypoints);
 
         mapname = file.ReadString(32);
+        mapname = string(mapname.c_str()); // for accurate .size() when null char is <31 char position
         printf("MAPNAME = %s\n", mapname.c_str());
 
         return number_of_waypoints < MAX_WAYPOINTS;
@@ -188,6 +190,7 @@ struct WAYPOINT {
 
 void convert_to_rcw(string rcwa_fpath) {
     string outpath = rcwa_fpath.substr(0, rcwa_fpath.length() - 1);
+    string fname = rcwa_fpath.substr(0, rcwa_fpath.length() - 5);
 
     std::ifstream t(rcwa_fpath);
     std::stringstream buffer;
@@ -216,9 +219,13 @@ void convert_to_rcw(string rcwa_fpath) {
     WAYPOINT_HDR outhdr;
     strncpy(outhdr.filetype, "RCBot", 8);
     outhdr.waypoint_file_version = 4;
-    outhdr.waypoint_file_flags = hdr.waypoint_file_flags;
+    outhdr.waypoint_file_flags = 0; // W_FILE_FL_READ_VISIBILITY
     outhdr.number_of_waypoints = hdr.number_of_waypoints;
-    strncpy(outhdr.mapname, hdr.mapname.c_str(), 32);
+
+    // map name required or metamod plugin thinks its an invalid file
+    // the map name is also compared to the current map name (case senstive)
+    string mapname = hdr.mapname.size() ? hdr.mapname : fname;
+    strncpy(outhdr.mapname, mapname.c_str(), 32);
     outhdr.mapname[31] = 0;
 
     FILE* outfile = fopen(outpath.c_str(), "wb");
