@@ -192,7 +192,7 @@ void convert_to_rcw(string rcwa_fpath) {
     string outpath = rcwa_fpath.substr(0, rcwa_fpath.length() - 1);
     string fname = rcwa_fpath.substr(0, rcwa_fpath.length() - 5);
 
-    int lastSlash = fname.find_last_not_of("/\\");
+    int lastSlash = fname.find_last_of("/\\");
     if (lastSlash != -1) {
         fname = fname.substr(lastSlash + 1);
     }
