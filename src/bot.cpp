@@ -9862,26 +9862,37 @@ BOOL CBot :: IsEnemy ( edict_t *pEntity )
 			}
 			else if ( strcmp(szClassname,"func_breakable") == 0 )
 			{
+				const int FL_BREAK_IMMUNE_TO_CLIENTS = 64;
+				const int FL_BREAK_EXPLOSIVES_ONLY = 512;
+				
+				bool onlyTrigger = pEnemypev->spawnflags & SF_BREAK_TRIGGER_ONLY;
+				bool immuneToClients = pEnemypev->spawnflags & FL_BREAK_IMMUNE_TO_CLIENTS;
+				bool explosivesOnly = pEnemypev->spawnflags & FL_BREAK_EXPLOSIVES_ONLY;
+				bool touchBreaks = pEnemypev->spawnflags & (SF_BREAK_TOUCH | SF_BREAK_PRESSURE);
+				
+				// TODO: force them to use the crowbar, instead of letting the spend all ammo and then use it
+				bool instantBreak = pEnemypev->spawnflags & SF_BREAK_CROWBAR;
 
-
-				return BotFunc_BreakableIsEnemy(pEntity,m_pEdict);
-				/*
 				// i. explosives required to blow breakable
 				// ii. OR is not a world brush (non breakable) and can be broken by shooting
-				if ( !(pEnemypev->flags & FL_WORLDBRUSH) && !(pEntity->v.spawnflags & SF_BREAK_TRIGGER_ONLY) )
-				{
+				if ( !onlyTrigger && !immuneToClients && !explosivesOnly && !touchBreaks ) {
+					CBaseEntity* baseplr = (CBaseEntity*)GET_PRIVATE(m_pEdict);
+					CBaseEntity* basebreak = (CBaseEntity*)GET_PRIVATE(pEntity);
 					Vector vSize = pEnemypev->size;
+					// Only shoot breakables that are bigger than me (crouch size)
+					// or that target something...
+					bool hasTarget = *STRING(pEnemypev->target);
+					bool isBigEnough = (vSize.x > 24) ||
+						(vSize.y > 24) ||
+						(vSize.z > 36);
 
-					if ( (*STRING(pEnemypev->target)) ||
-						 (vSize.x > 24) ||
-						 (vSize.y > 24) ||
-						 (vSize.z > 36) )
-					{
-						// Only shoot breakables that are bigger than me (crouch size)
-						// or that target something...
+					int irel = baseplr->IRelationship(basebreak, true);
+					bool isEnemy = irel != R_AL;
+
+					if ( (hasTarget || isBigEnough) && isEnemy) {
 						return TRUE;
 					}
-				}*/
+				}
 			}
 			else if ( strcmp(szClassname,"func_button") == 0 )
 			{
@@ -11396,6 +11407,7 @@ BOOL BotFunc_BreakableIsEnemy ( edict_t *pBreakable, edict_t *pEdict )
 			(vSize->y >= vMySize->y) ||
 			(vSize->z >= (vMySize->z/2)) )
 		{
+			CBaseEntity* pbase = (CBaseEntity*)GET_PRIVATE(pBreakable);
 			// Only shoot breakables that are bigger than me (crouch size)
 			// or that target something...
 			return ((pEnemypev->target && *STRING(pEnemypev->target))||(pEnemypev->health < 1000)) && !(pEnemypev->effects & EF_NODRAW); // breakable still visible (not broken yet)
