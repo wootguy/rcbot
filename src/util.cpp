@@ -2587,7 +2587,6 @@ void BotFunc_InitProfile(bot_profile_t* bpBotProfile)
 	bpBotProfile->m_szSpray = NULL;
 	bpBotProfile->m_iNumGames = 0;
 
-	bpBotProfile->m_HAL = NULL;
 	bpBotProfile->m_szHAL_AuxFile = NULL;
 	bpBotProfile->m_szHAL_BanFile = NULL;
 	bpBotProfile->m_szHAL_PreTrainFile = NULL;
@@ -2690,7 +2689,7 @@ void BotFunc_WriteProfile(FILE* fp, bot_profile_t* bpBotProfile)
 
 	bpBotProfile->m_Rep.SaveAllRep(bpBotProfile->m_iProfileId);
 
-	bpBotProfile->m_HAL->save_model();
+	getBotBrain(bpBotProfile)->save_model(false);
 }
 
 void BotFunc_ReadProfile(FILE* fp, bot_profile_t* bpBotProfile)
@@ -2890,8 +2889,6 @@ void BotFunc_ReadProfile(FILE* fp, bot_profile_t* bpBotProfile)
 			bpBotProfile->m_fVisionTime = atof(&szBuffer[19]);
 		}
 	}
-
-	LoadHALBrainForPersonality(bpBotProfile); // wake the bot's HAL brain up
 
 	// Also read bots rep with other players on the server
 

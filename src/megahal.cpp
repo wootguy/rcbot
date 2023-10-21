@@ -35,6 +35,9 @@ using namespace std;
 #define COOKIE "MegaHALv8"
 #define TIMEOUT 1
 
+ThreadSafeInt g_load_threads;
+ThreadSafeInt g_save_threads;
+
 static bool file_exists(const char* path) {
     FILE* file = fopen(path, "r");
     if (file == NULL) {
@@ -46,7 +49,30 @@ static bool file_exists(const char* path) {
 
 void MegaHal::load_personality(const char* path)
 {
+    if (saveload_thread != NULL) {
+        println("Waiting for model to finish loading/saving before loading personality again");
+        saveload_thread->join();
+        delete saveload_thread;
+        saveload_thread = NULL;
+    }
+
+    if (model != NULL) {
+        println("Personality already loaded.");
+        return;
+    }
+
+    saveload_status.setValue(1);
+    char* pathCopy = strdup(path);
+    saveload_thread = new thread(&MegaHal::load_personality_thread, this, pathCopy);
+}
+
+void MegaHal::load_personality_thread(const char* path) {
     FILE* file;
+
+    while (g_load_threads.getValue() > 0) {
+        this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    g_load_threads.inc();
 
     brnpath = string(path) + ".brn";
     string trnpath = string(path) + ".trn";
@@ -56,7 +82,7 @@ void MegaHal::load_personality(const char* path)
 
     string rootDir = string(path);
     if (rootDir.find_last_of("/\\") != -1) {
-        rootDir = rootDir.substr(0, rootDir.find_last_of("/\\")+1);
+        rootDir = rootDir.substr(0, rootDir.find_last_of("/\\") + 1);
     }
 
     if (!file_exists(trnpath.c_str())) {
@@ -85,12 +111,34 @@ void MegaHal::load_personality(const char* path)
 
     if (load_model(brnpath.c_str(), model) == false) {
         train(trnpath.c_str());
-        save_model();
+        save_model_thread(false);
     }
+    else {
+        saveload_status.setValue(0);
+    }
+
+    g_load_threads.dec();
+    println("Finished loading brain: %s", path);
+    free((void*)path);
 }
 
 char* MegaHal::do_reply(char *input, bool learnFromInput)
 {
+    if (saveload_thread != NULL) {
+        if (saveload_status.getValue() == 1) {
+            println("Can't reply yet. Model is saving/loading");
+            return "my brain is still loading";
+        }
+        saveload_thread->join();
+        delete saveload_thread;
+        saveload_thread = NULL;
+    }
+
+    if (model == NULL) {
+        println("Can't reply. Model is null");
+        return "My HAL model is null";
+    }
+
     char* inputCopy = strdup(input);
     char *output = NULL;
 
@@ -110,14 +158,50 @@ char* MegaHal::do_reply(char *input, bool learnFromInput)
 
 void MegaHal::learn_no_reply(char *input)
 {
+    if (saveload_thread != NULL) {
+        if (saveload_status.getValue() == 1) {
+            println("Can't learn yet. Model is saving/loading");
+            return;
+        }
+        saveload_thread->join();
+        delete saveload_thread;
+        saveload_thread = NULL;
+    }
+
+    if (model == NULL) {
+        println("Can't learn. Model is null");
+    }
+
     upper(input);
     make_words(input, words);
     learn(model, words);
 }
 
-void MegaHal::save_model()
+void MegaHal::save_model(bool deleteAfterSaving)
 {
+    if (saveload_thread != NULL) {
+        println("Waiting for model to finish loading/saving before saving personality again");
+        saveload_thread->join();
+        delete saveload_thread;
+        saveload_thread = NULL;
+    }
+
+    if (model == NULL) {
+        println("Can't save model. Model was deleted.");
+        return;
+    }
+
+    saveload_status.setValue(1);
+    saveload_thread = new thread(&MegaHal::save_model_thread, this, deleteAfterSaving);
+}
+
+void MegaHal::save_model_thread(bool deleteAfterSave) {
     FILE* file;
+
+    while (g_save_threads.getValue() > 0) {
+        this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    g_save_threads.inc();
 
     if (brnpath.size() == 0) {
         printf("Can't save hal model. Not initialized.");
@@ -137,6 +221,14 @@ void MegaHal::save_model()
     save_dictionary(file, model->dictionary);
 
     fclose(file);
+
+    if (deleteAfterSave) {
+        free_everything();
+    }
+
+    println("Finished saving brain: %s", brnpath.c_str());
+    saveload_status.setValue(0);
+    g_save_threads.dec();
 }
 
 MegaHal::~MegaHal() {

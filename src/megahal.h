@@ -20,6 +20,8 @@
 
 #pragma once
 #include <string>
+#include <thread>
+#include "ThreadSafeInt.h"
 
 struct HAL_STRING {
     uint8_t length;
@@ -82,7 +84,7 @@ public:
 	void learn_no_reply(char* input);
 
     // Save the current state to a MegaHAL brain file.
-	void save_model();
+	void save_model(bool deleteAfterSaving);
 
     // rapidly learn from a text file containing chat messages seperated by newlines
     void train(const char* path);
@@ -91,6 +93,13 @@ public:
     void write_dictionary();
 
 private:
+    std::thread* saveload_thread = NULL;
+    ThreadSafeInt saveload_status;
+
+    void load_personality_thread(const char* path);
+
+    void save_model_thread(bool deleteAfterSave);
+
     int order = 5;
 
     // increase for more "surprising" replies.

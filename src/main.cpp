@@ -556,7 +556,7 @@ void ClientDisconnect(edict_t* pEntity)
 		int iProfileId = pBot->m_Profile.m_iProfileId;
 		int iTeam = pBot->m_Profile.m_iFavTeam;
 
-		pBot->m_Profile.m_HAL->save_model(); // save this personality's HAL brain
+		getBotBrain(&(pBot->m_Profile))->save_model(true); // save this personality's HAL brain
 
 		pBot->saveLearnedData();
 		pBot->FreeLocalMemory();
@@ -1060,6 +1060,7 @@ void ServerDeactivate(void)
 
 void StartFrame(void)
 {
+	handleThreadPrints();
 	gBotGlobals.StartFrame();
 
 #ifdef RCBOT_META_BUILD

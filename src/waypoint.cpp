@@ -535,7 +535,7 @@ BOOL WaypointLoad(edict_t *pEntity)
                num_waypoints++;
 
 			   Vector ori = waypoints[i].origin;
-			   println("READ wpt %d, %d at (%d %d %d)", i, waypoints[i].flags, (int)ori.x, (int)ori.y, (int)ori.z);
+			   //println("READ wpt %d, %d at (%d %d %d)", i, waypoints[i].flags, (int)ori.x, (int)ori.y, (int)ori.z);
             }
 
             // read and add waypoint paths...
