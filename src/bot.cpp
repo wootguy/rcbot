@@ -1204,12 +1204,6 @@ void CBot :: FreeLocalMemory ( void )
 	//sOpenList.Destroy();
 	
 	m_FailedGoals.Destroy();
-	
-	if ( m_Profile.m_HAL )
-	{
-		delete m_Profile.m_HAL;
-		m_Profile.m_HAL = NULL;
-	}
 }
 
 BOOL CBot :: WantToLeaveGame ( void )

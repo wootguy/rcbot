@@ -1602,8 +1602,6 @@ struct bot_profile_t
 	char *m_szHAL_BanFile;
 	char *m_szHAL_SwapFile;
 
-	MegaHal *m_HAL;
-
 	CBotReputations m_Rep;
 
 	int m_iClass;

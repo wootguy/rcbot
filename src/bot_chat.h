@@ -44,6 +44,8 @@ class CBot;
 struct bot_profile_t;
 #endif
 
+class MehaHal;
+
 void HumanizeString ( char *string );
 void RemoveNameTags ( const char *in_string, char *out_string );
 
@@ -54,3 +56,5 @@ void BotTalk (CBot *pBot, char *sound_path);
 
 void BotChatReply ( CBot *pBot, char *szMsg, edict_t *pSender, char *szReplyMsg );
 bool LoadHALBrainForPersonality (bot_profile_t*pBotProfile);
+
+MegaHal* getBotBrain(bot_profile_t* pBotProfile);

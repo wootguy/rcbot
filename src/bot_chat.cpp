@@ -83,6 +83,20 @@ char *name_in_msg = "%n";
 #define max(x,y) (((x) >= (y)) ? (x) : (y))
 #endif
 
+// maps a profile ID to a brain
+map<int, MegaHal*> g_megahal_brains;
+
+MegaHal* getBotBrain(bot_profile_t* pBotProfile) {
+	int profileid = pBotProfile->m_iProfileId;
+
+	if (g_megahal_brains.find(profileid) == g_megahal_brains.end()) {
+		MegaHal* brain = new MegaHal();
+		g_megahal_brains[profileid] = brain;
+	}
+	
+	return g_megahal_brains[profileid];
+}
+
 void BotChatReply ( CBot *pBot, char *szMsg, edict_t *pSender, char *szReplyMsg )
 {
    // the purpose of this function is to make the bot keep an eye on what's happening in the
@@ -145,6 +159,8 @@ void BotChatReply ( CBot *pBot, char *szMsg, edict_t *pSender, char *szReplyMsg 
 		bool shouldLearnFromInput = !gBotGlobals.IsConfigSettingOn(BOT_CONFIG_CHAT_DONT_LEARN)
 			&& UTIL_GetBotPointer(pSender) == NULL;
 
+		MegaHal* hal = getBotBrain(&pBot->m_Profile);
+
 		// does the bot feel concerned ? (more chances of replying if its name appears)
 		// if real mode is on, then bot chat is affected by bots rep with sender
 		// and depends on chat_reply_percent command
@@ -154,7 +170,7 @@ void BotChatReply ( CBot *pBot, char *szMsg, edict_t *pSender, char *szReplyMsg 
 			pBot->m_MegaHALTalkEdict = pSender;
 
             //BotHALGenerateReply (pBot, szReplyMsg ); // generate the reply
-			char* replyString = pBot->m_Profile.m_HAL->do_reply(szMsg, shouldLearnFromInput);
+			char* replyString = hal->do_reply(szMsg, shouldLearnFromInput);
 			strncpy(szReplyMsg, replyString, BOT_CHAT_MESSAGE_LENGTH);
 			szReplyMsg[BOT_CHAT_MESSAGE_LENGTH - 1] = '\0';
 
@@ -165,11 +181,11 @@ void BotChatReply ( CBot *pBot, char *szMsg, edict_t *pSender, char *szReplyMsg 
 			else
 				szReplyMsg[0]=0;
 		} else if (shouldLearnFromInput) {
-			pBot->m_Profile.m_HAL->learn_no_reply(szMsg);
+			hal->learn_no_reply(szMsg);
 		}
 
-		delete szName;
-		delete szSenderName;
+		delete[] szName;
+		delete[] szSenderName;
 
 		szName = NULL;
 		szSenderName = NULL;
@@ -302,7 +318,7 @@ void RemoveNameTags ( const char *in_string, char *out_string )
 			}
 		}
 
-		if ( isalnum(in_string[i]) )
+		if ( isalnum((byte)in_string[i]) )
 		{
 			current_char = in_string[i];
 
@@ -431,21 +447,19 @@ void FillStringArea ( char *string, int maxstring, char *fill, int maxfill, int 
 	after = NULL;
 }
 
-bool LoadHALBrainForPersonality (bot_profile_t* pBotProfile )
+bool LoadHALBrainForPersonality(bot_profile_t* pBotProfile)
 {
 	// this function loads a HAL brain
-	pBotProfile->m_HAL = new MegaHal();
-
-	if (pBotProfile->m_HAL == NULL)
-		return FALSE; // reliability check
-
 	char brn_file[256];
 	sprintf(brn_file, "%d", pBotProfile->m_iProfileId);
 
 	char fpath[256];
 	UTIL_BuildFileName(fpath, BOT_PROFILES_FOLDER, brn_file);
 
-	pBotProfile->m_HAL->load_personality(fpath);
+	if (g_megahal_brains.find(pBotProfile->m_iProfileId) == g_megahal_brains.end()) {
+		g_megahal_brains[pBotProfile->m_iProfileId] = new MegaHal();
+	}
+	getBotBrain(pBotProfile)->load_personality(fpath);
 
 	return (TRUE); // no error, return FALSE
 }

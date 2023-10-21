@@ -1910,6 +1910,8 @@ eBotCvarState BotFunc_AddBot ( CClient *pClient, const char *arg1, const char *a
         return BOT_CVAR_ERROR;
     }
     
+	LoadHALBrainForPersonality(&gBotGlobals.m_Bots[iBotIndex].m_Profile); // wake the bot's HAL brain up
+
     char ptr[128];  // allocate space for message from ClientConnect
     char *sInfoBuffer; // Bots infobuffer
     int index; // bots edict index
