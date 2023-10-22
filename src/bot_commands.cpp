@@ -890,6 +890,10 @@ eBotCvarState CDebugCommand :: action ( CClient *pClient, const char *arg1, cons
         iDebugLevel = BOT_DEBUG_NAV_LEVEL;
     else if ( FStrEq(arg1,"see") )
         iDebugLevel = BOT_DEBUG_SEE_LEVEL;
+	else if (FStrEq(arg1, "wep"))
+		iDebugLevel = BOT_DEBUG_WEAPON_LEVEL;
+	
+	//iDebugLevel = BOT_DEBUG_THINK_LEVEL | BOT_DEBUG_NAV_LEVEL | BOT_DEBUG_SEE_LEVEL;
 
     if ( iDebugLevel )
     {

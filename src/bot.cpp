@@ -10091,6 +10091,10 @@ void DebugMessage ( int iDebugLevel, edict_t *pEntity, int errorlevel, char *fmt
 		// Bot touches/finds waypoints
 		sprintf(szDebugMsg,"%s:SEE]=>",BOT_DEBUG_TAG);
 		break;
+	case BOT_DEBUG_WEAPON_LEVEL:
+		// Bot touches/finds waypoints
+		sprintf(szDebugMsg, "%s:WEP]=>", BOT_DEBUG_TAG);
+		break;
 	}
 
 	BotMessage(pEntity,errorlevel,"%s%s",szDebugMsg,string);

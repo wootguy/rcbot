@@ -428,8 +428,6 @@ void GetArrayOfExplosives ( short int *Array )
 //
 int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 {	
-	int i;
-	
 	priority_queue<CBotWeapon*,vector<CBotWeapon*>,CompareBotWeapon> Weapons;
 	priority_queue<CBotWeapon*,vector<CBotWeapon*>,CompareBotWeapon> otherWeapons;
 //	dataQueue<int> Weapons;
@@ -453,7 +451,7 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 
 	short int iAllowedWeapons[MAX_WEAPONS];
 
-	for ( i = 0; i < MAX_WEAPONS; i ++ )
+	for ( int i = 0; i < MAX_WEAPONS; i ++ )
 		iAllowedWeapons[i] = 1;	
 
 	if ( pEnemy )
@@ -541,6 +539,8 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 				bWantToMelee = TRUE;
 		}
 		break;
+	default:
+		break;
 	}
 	
 	if ( pEnemy )
@@ -548,21 +548,21 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 		switch ( gBotGlobals.m_iCurrentMod )
 		{
 		case MOD_SVENCOOP:
-			if ( FStrEq("func_breakable",STRING(pEnemy->v.classname)) )
+		if ( FStrEq("func_breakable",STRING(pEnemy->v.classname)) )
+		{
+			if ( pEnemy->v.spawnflags & 512 )
 			{
-				if ( pEnemy->v.spawnflags & 512 )
-				{
-					GetNoWeaponArray(iAllowedWeapons);
-					GetArrayOfExplosives(iAllowedWeapons);//bExplosives = pEnemy->v.spawnflags & 512;
+				GetNoWeaponArray(iAllowedWeapons);
+				GetArrayOfExplosives(iAllowedWeapons);//bExplosives = pEnemy->v.spawnflags & 512;
 					
-					if ( pBot->HasWeapon(VALVE_WEAPON_MP5) )
-					{
-						CBotWeapon *pWeapon = pBot->m_Weapons.GetWeapon(VALVE_WEAPON_MP5);
+				if ( pBot->HasWeapon(VALVE_WEAPON_MP5) )
+				{
+					CBotWeapon *pWeapon = pBot->m_Weapons.GetWeapon(VALVE_WEAPON_MP5);
 						
-						if ( pWeapon->SecondaryAmmo() > 0 )
-							iAllowedWeapons[VALVE_WEAPON_MP5] = 1;
-					}
+					if ( pWeapon->SecondaryAmmo() > 0 )
+						iAllowedWeapons[VALVE_WEAPON_MP5] = 1;
 				}
+			}
 		}
 		else if ( FStrEq("monster_gargantua",STRING(pEnemy->v.classname)) )
 		{
@@ -612,12 +612,16 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 		}
 	}
 
-	for ( i = 1; i < 30; i ++ )
+	for ( int i = 0; i < MAX_WEAPONS; i ++ )
 	{
 		pWeapon = &m_Weapons[i];
 
-		if ( iAllowedWeapons[i] == 0 )
+		if (iAllowedWeapons[i] == 0) {
+			if (gBotGlobals.IsDebugLevelOn(BOT_DEBUG_WEAPON_LEVEL)) {
+				DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "%s - not allowed to use", pWeapon->GetClassname());
+			}
 			continue;
+		}
 		/*
 		if ( bExplosives )
 		{
@@ -633,8 +637,9 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 		}*/
 
 		// use the weapon code to see if we have the weapon in DMC
-		if ( (!bIsDMC && !pBot->HasWeapon(i)) || !pWeapon->HasWeapon(pBot->m_pEdict) )
-			continue;	
+		if ((!bIsDMC && !pBot->HasWeapon(i)) || !pWeapon->HasWeapon(pBot->m_pEdict)) {
+			continue;
+		}
 
 		if ( gBotGlobals.IsNS() )
 		{
@@ -659,8 +664,12 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 
 		if ( bUnderwater )
 		{
-			if ( !pWeapon->CanBeUsedUnderWater() )
+			if (!pWeapon->CanBeUsedUnderWater()) {
+				if (gBotGlobals.IsDebugLevelOn(BOT_DEBUG_WEAPON_LEVEL)) {
+					DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "%s - Can't use underwater", pWeapon->GetClassname());
+				}
 				continue;
+			}
 		}
 		
 		if ( pWeapon->IsMelee() )
@@ -668,6 +677,9 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 			if ( bEnemyTooHigh )
 			{
 				// too high to hit...
+				if (gBotGlobals.IsDebugLevelOn(BOT_DEBUG_WEAPON_LEVEL)) {
+					DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "%s - target too high for melee", pWeapon->GetClassname());
+				}
 				continue;
 			}
 			else if ( pEnemy && bEnemyIsElectrified )
@@ -697,12 +709,18 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 				if ( pBot->dec_attackElectrified->trained() && !pBot->dec_attackElectrified->fired() )//pBot->IsSkulk() )
 				{
 				// will be electrified if I try to attack...
+					if (gBotGlobals.IsDebugLevelOn(BOT_DEBUG_WEAPON_LEVEL)) {
+						DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "%s - target is too electrified for melee", pWeapon->GetClassname());
+					}
 					continue;
 				}
 			}
 			
 
 			otherWeapons.push(pWeapon);
+			if (gBotGlobals.IsDebugLevelOn(BOT_DEBUG_WEAPON_LEVEL)) {
+				DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "%s - USABLE (priority %d)", pWeapon->GetClassname(), pWeapon->GetPriority());
+			}
 			Weapons.push(pWeapon);//.Add(i);	
 			continue;
 		}
@@ -710,6 +728,9 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 		if ( !pWeapon->CanShootPrimary(pEdict,fEnemyDist,pBot->m_fDistanceFromWall) )
 		{
 			//if ( !pWeapon->CanShootSecondary() )
+			if (gBotGlobals.IsDebugLevelOn(BOT_DEBUG_WEAPON_LEVEL)) {
+				DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "%s - can't shoot primary", pWeapon->GetClassname());
+			}
 			continue;
 		}
 		
@@ -724,13 +745,23 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 
 		if ( pWeapon->NeedToReload() )
 		{
+			if (gBotGlobals.IsDebugLevelOn(BOT_DEBUG_WEAPON_LEVEL)) {
+				DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "%s - USABLE (priority %d)", pWeapon->GetClassname(), pWeapon->GetPriority());
+			}
 			Weapons.push(pWeapon);//.Add(i);
 			continue;
 		}
 
-		if ( pWeapon->OutOfAmmo() )
+		if (pWeapon->OutOfAmmo()) {
+			if (gBotGlobals.IsDebugLevelOn(BOT_DEBUG_WEAPON_LEVEL)) {
+				DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "%s - out of ammo for", pWeapon->GetClassname());
+			}
 			continue;
+		}
 
+		if (gBotGlobals.IsDebugLevelOn(BOT_DEBUG_WEAPON_LEVEL)) {
+			DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "%s - USABLE (priority %d)", pWeapon->GetClassname(), pWeapon->GetPriority());
+		}
 		Weapons.push(pWeapon);//.Add(i);
 	}
 
@@ -764,16 +795,35 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 			{
 				pWeapon = otherWeapons.top();
 				
+				if (gBotGlobals.IsDebugLevelOn(BOT_DEBUG_WEAPON_LEVEL)) {
+					if (pWeapon)
+						DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "%d held weps. Best wep %s (priority %d) has %d clip and %d ammo", Weapons.size(), pWeapon->GetClassname(), pWeapon->GetPriority(), pWeapon->getClip(), pWeapon->PrimaryAmmo());
+					DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "---------------------------------------------------");
+				}
+
 				return pWeapon->GetID();
 			}			
 			
 			if ( gBotGlobals.IsMod(MOD_TS) )
 				return 36;
+
+			if (gBotGlobals.IsDebugLevelOn(BOT_DEBUG_WEAPON_LEVEL)) {
+				DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "No usable weapons!"); 
+				DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "---------------------------------------------------");
+			}
 			return 0;
 		}
 	}
 
 	pWeapon = Weapons.top();
+	
+	if (gBotGlobals.IsDebugLevelOn(BOT_DEBUG_WEAPON_LEVEL)) {
+		if (pWeapon)
+			DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "%d usable weps. Best wep %s (priority %d) has %d clip and %d ammo", Weapons.size(), pWeapon->GetClassname(), pWeapon->GetPriority(), pWeapon->getClip(), pWeapon->PrimaryAmmo());
+		else 
+			DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "No usable weapons!");
+		DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "---------------------------------------------------");
+	}
 
 	return pWeapon->GetID();
 
