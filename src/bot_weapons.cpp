@@ -449,6 +449,8 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 	BOOL bIsBattleGrounds = (gBotGlobals.m_iCurrentMod == MOD_BG);
 	BOOL bWantToMelee = FALSE;
 
+	bool bIsBreakable = pEnemy && FStrEq("func_breakable", STRING(pEnemy->v.classname));
+
 	short int iAllowedWeapons[MAX_WEAPONS];
 
 	for ( int i = 0; i < MAX_WEAPONS; i ++ )
@@ -459,6 +461,10 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 		vEnemyOrigin = EntityOrigin(pEnemy);
 		fEnemyDist = pBot->DistanceFrom(vEnemyOrigin);
 		bEnemyTooHigh = ( vEnemyOrigin.z > (pBot->pev->origin.z + MAX_JUMP_HEIGHT) );
+
+		if (bIsBreakable) {
+			bEnemyTooHigh = (pEnemy->v.absmin.z > (pBot->pev->origin.z + MAX_JUMP_HEIGHT) );
+		}
 	}
 	else
 	{
@@ -548,9 +554,11 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 		switch ( gBotGlobals.m_iCurrentMod )
 		{
 		case MOD_SVENCOOP:
-		if ( FStrEq("func_breakable",STRING(pEnemy->v.classname)) )
+		if (bIsBreakable)
 		{
-			if ( pEnemy->v.spawnflags & 512 )
+			iAllowedWeapons[SVEN_WEAPON_GRAPPLE] = 0; // grapple can't damage breakables
+
+			if ( pEnemy->v.spawnflags & SF_BREAK_EXPLOSIVES )
 			{
 				GetNoWeaponArray(iAllowedWeapons);
 				GetArrayOfExplosives(iAllowedWeapons);//bExplosives = pEnemy->v.spawnflags & 512;
@@ -561,6 +569,19 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 						
 					if ( pWeapon->SecondaryAmmo() > 0 )
 						iAllowedWeapons[VALVE_WEAPON_MP5] = 1;
+				}
+			}
+			if ((pEnemy->v.spawnflags & SF_BREAK_INSTANT))
+			{
+				// TODO: don't know which weapon it's weak to because the "weapon" keyvalue is private
+				// and if the entity was created by angelscript then the KeyValue hook is never called.
+				// It will eventually break with any weapon.
+				bool hasInstantBreakWep = pBot->HasWeapon(VALVE_WEAPON_CROWBAR) || pBot->HasWeapon(SVEN_WEAPON_PIPEWRENCH);
+
+				if (hasInstantBreakWep || pEnemy->v.health > 1000) {
+					GetNoWeaponArray(iAllowedWeapons);
+					iAllowedWeapons[VALVE_WEAPON_CROWBAR] = 1;
+					iAllowedWeapons[SVEN_WEAPON_PIPEWRENCH] = 1;
 				}
 			}
 		}
@@ -612,12 +633,16 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 		}
 	}
 
-	for ( int i = 0; i < MAX_WEAPONS; i ++ )
+	if (pEnemy && gBotGlobals.IsDebugLevelOn(BOT_DEBUG_WEAPON_LEVEL)) {
+		DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "Target: %s", STRING(pEnemy->v.classname));
+	}
+
+	for ( int i = 1; i < MAX_WEAPONS; i ++ )
 	{
 		pWeapon = &m_Weapons[i];
 
 		if (iAllowedWeapons[i] == 0) {
-			if (gBotGlobals.IsDebugLevelOn(BOT_DEBUG_WEAPON_LEVEL)) {
+			if (pWeapon->HasWeapon(pBot->m_pEdict) && gBotGlobals.IsDebugLevelOn(BOT_DEBUG_WEAPON_LEVEL)) {
 				DebugMessage(BOT_DEBUG_WEAPON_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "%s - not allowed to use", pWeapon->GetClassname());
 			}
 			continue;

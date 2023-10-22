@@ -9854,21 +9854,14 @@ BOOL CBot :: IsEnemy ( edict_t *pEntity )
 			}
 			else if ( strcmp(szClassname,"func_breakable") == 0 )
 			{
-				const int FL_BREAK_IMMUNE_TO_CLIENTS = 64;
-				const int FL_BREAK_EXPLOSIVES_ONLY = 512;
-				
 				bool onlyTrigger = pEnemypev->spawnflags & SF_BREAK_TRIGGER_ONLY;
-				bool immuneToClients = pEnemypev->spawnflags & FL_BREAK_IMMUNE_TO_CLIENTS;
-				bool explosivesOnly = pEnemypev->spawnflags & FL_BREAK_EXPLOSIVES_ONLY;
+				bool immuneToClients = pEnemypev->spawnflags & SF_BREAK_IMMUNE_TO_CLIENTS;
 				bool touchBreaks = pEnemypev->spawnflags & (SF_BREAK_TOUCH | SF_BREAK_PRESSURE);
 				bool isUnbreakableGlass = pEnemypev->flags & FL_WORLDBRUSH;
 
-				// TODO: force them to use the crowbar, instead of letting the spend all ammo and then use it
-				bool instantBreak = pEnemypev->spawnflags & SF_BREAK_CROWBAR;
-
 				// i. explosives required to blow breakable
 				// ii. OR is not a world brush (non breakable) and can be broken by shooting
-				if ( !onlyTrigger && !immuneToClients && !explosivesOnly && !touchBreaks && !isUnbreakableGlass) {
+				if ( !onlyTrigger && !immuneToClients && !touchBreaks && !isUnbreakableGlass) {
 					CBaseEntity* baseplr = (CBaseEntity*)GET_PRIVATE(m_pEdict);
 					CBaseEntity* basebreak = (CBaseEntity*)GET_PRIVATE(pEntity);
 					Vector vSize = pEnemypev->size;
@@ -15444,21 +15437,21 @@ void CBot :: DoTasks ()
 				case MOD_HL_DM:				
 				default:
 					{
-					BOOL bChangeWeapon = FALSE;
+						BOOL bChangeWeapon = FALSE;
 
-					if ( gBotGlobals.IsMod(MOD_TFC) && (pev->playerclass == TFC_CLASS_SPY) && (pev->iuser3 == 1) )
-					{					
-						//TaskToAdd = CBotTask(BOT_TASK_TFC_FEIGN_DEATH,m_CurrentTask->GetScheduleId());
-						bTaskFailed = TRUE;
-						break;
-					}
+						if ( gBotGlobals.IsMod(MOD_TFC) && (pev->playerclass == TFC_CLASS_SPY) && (pev->iuser3 == 1) )
+						{					
+							//TaskToAdd = CBotTask(BOT_TASK_TFC_FEIGN_DEATH,m_CurrentTask->GetScheduleId());
+							bTaskFailed = TRUE;
+							break;
+						}
 
 					
-					if ( (m_pCurrentWeapon == NULL) || (m_pCurrentWeapon->HasWeapon(m_pEdict)==FALSE) )
-					{
-						//Get weapon
-						bChangeWeapon = TRUE;
-					}
+						if ( (m_pCurrentWeapon == NULL) || (m_pCurrentWeapon->HasWeapon(m_pEdict)==FALSE) )
+						{
+							//Get weapon
+							bChangeWeapon = TRUE;
+						}
 					
 						// lets say that an int of 0 means not chosen a weapon...
 						if ( m_CurrentTask->TaskInt() == 0 ) // not chosen weapon yet?
@@ -15483,8 +15476,15 @@ void CBot :: DoTasks ()
 							// too high?
 							else if ( vEnemyOrigin.z > (pev->origin.z + MAX_JUMP_HEIGHT) )
 							{
-								bTaskFailed = TRUE;
-								break;
+								bool bEnemyTooHigh = true;
+								if (m_pEnemy && FStrEq(STRING(m_pEnemy->v.classname), "func_breakable")) {
+									bEnemyTooHigh = (m_pEnemy->v.absmin.z > (pev->origin.z + MAX_JUMP_HEIGHT));
+								}
+
+								if (bEnemyTooHigh) {
+									bTaskFailed = TRUE;
+									break;
+								}
 							}
 
 							decideJumpDuckStrafe(fEnemyDist,vEnemyOrigin);
