@@ -838,6 +838,10 @@ public:
 		m_iClip = iClip;
 	}
 
+	int getClip() {
+		return m_iClip;
+	}
+
     char *GetClassname ( void )
 	{
 		if ( m_pWeaponInfo )

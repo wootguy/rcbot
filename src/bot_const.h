@@ -1355,6 +1355,7 @@ typedef enum eBattleGroundsMessage
 #define BOT_DEBUG_AIM_LEVEL		(1<<6)// Bot aims at something
 #define BOT_DEBUG_NAV_LEVEL     (1<<7)// Bot touches/finds waypoints
 #define BOT_DEBUG_SEE_LEVEL     (1<<8)// Bot sees something
+#define BOT_DEBUG_WEAPON_LEVEL  (1<<9)// Bot considers which weapon to use
 
 /////////////////////////////////
 // PROFILE

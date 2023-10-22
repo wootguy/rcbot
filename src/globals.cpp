@@ -768,6 +768,9 @@ void CBotGlobals :: StartFrame ( void )
 
 										pBot->m_iBotWeapons |= 1 << id;
 										pBot->m_Weapons.AddWeapon(id);
+										
+										CBasePlayerWeapon* baseWep = (CBasePlayerWeapon*)GET_PRIVATE(ent);
+										pBot->m_Weapons.GetWeapon(id)->UpdateWeapon(baseWep->m_iClip);
 									}
 								}
 							}
