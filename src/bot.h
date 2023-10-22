@@ -63,6 +63,7 @@
 #include "bot_ga.h"
 #include "bits.h"
 #include "nn.h"
+#include "rcbot_vector.h"
 
 #include <string.h>
 #include <vector>
