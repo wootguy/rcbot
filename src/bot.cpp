@@ -9813,12 +9813,10 @@ BOOL CBot :: IsEnemy ( edict_t *pEntity )
 					}
 				case CLASS_MACHINE:
 					{
-						if ( FStrEq("monster_turret",szClassname) )
-						{
-							if (!pEnemypev->sequence)
-								isEnemyClass = false;
-						} else
-							isEnemyClass = true;
+						isEnemyClass = true;
+						if ( FStrEq("monster_turret",szClassname) || FStrEq("monster_miniturret", szClassname)) {
+							isEnemyClass = pEnemypev->sequence != 0;
+						}
 						break;
 					}
 				case CLASS_ALIEN_PASSIVE:
@@ -9863,13 +9861,14 @@ BOOL CBot :: IsEnemy ( edict_t *pEntity )
 				bool immuneToClients = pEnemypev->spawnflags & FL_BREAK_IMMUNE_TO_CLIENTS;
 				bool explosivesOnly = pEnemypev->spawnflags & FL_BREAK_EXPLOSIVES_ONLY;
 				bool touchBreaks = pEnemypev->spawnflags & (SF_BREAK_TOUCH | SF_BREAK_PRESSURE);
-				
+				bool isUnbreakableGlass = pEnemypev->flags & FL_WORLDBRUSH;
+
 				// TODO: force them to use the crowbar, instead of letting the spend all ammo and then use it
 				bool instantBreak = pEnemypev->spawnflags & SF_BREAK_CROWBAR;
 
 				// i. explosives required to blow breakable
 				// ii. OR is not a world brush (non breakable) and can be broken by shooting
-				if ( !onlyTrigger && !immuneToClients && !explosivesOnly && !touchBreaks ) {
+				if ( !onlyTrigger && !immuneToClients && !explosivesOnly && !touchBreaks && !isUnbreakableGlass) {
 					CBaseEntity* baseplr = (CBaseEntity*)GET_PRIVATE(m_pEdict);
 					CBaseEntity* basebreak = (CBaseEntity*)GET_PRIVATE(pEntity);
 					Vector vSize = pEnemypev->size;
