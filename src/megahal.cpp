@@ -37,6 +37,7 @@ using namespace std;
 
 ThreadSafeInt g_load_threads;
 ThreadSafeInt g_save_threads;
+ThreadSafeInt g_pending_brain_saves;
 
 static bool file_exists(const char* path) {
     FILE* file = fopen(path, "r");
@@ -191,6 +192,7 @@ void MegaHal::save_model(bool deleteAfterSaving)
         return;
     }
 
+    g_pending_brain_saves.inc();
     saveload_status.setValue(1);
     saveload_thread = new thread(&MegaHal::save_model_thread, this, deleteAfterSaving);
 }
@@ -205,13 +207,13 @@ void MegaHal::save_model_thread(bool deleteAfterSave) {
 
     if (brnpath.size() == 0) {
         printf("Can't save hal model. Not initialized.");
-        return;
+        goto cleanup;
     }
 
-    file = fopen(brnpath.c_str(), "wb");
+    file = fopen((brnpath + ".temp").c_str(), "wb");
     if (file == NULL) {
         warn("save_model", "Unable to open file '%s'", brnpath.c_str());
-        return;
+        goto cleanup;
     }
 
     fwrite(COOKIE, sizeof(char), strlen(COOKIE), file);
@@ -221,14 +223,19 @@ void MegaHal::save_model_thread(bool deleteAfterSave) {
     save_dictionary(file, model->dictionary);
 
     fclose(file);
+    remove(brnpath.c_str());
+    rename((brnpath + ".temp").c_str(), brnpath.c_str());
 
     if (deleteAfterSave) {
         free_everything();
     }
 
     println("Finished saving brain: %s", brnpath.c_str());
+
+cleanup:
     saveload_status.setValue(0);
     g_save_threads.dec();
+    g_pending_brain_saves.dec();
 }
 
 MegaHal::~MegaHal() {
