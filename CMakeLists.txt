@@ -43,6 +43,7 @@ set(SOURCE_FILES
 	src/util.cpp
 	src/waypoint.h src/waypoint.cpp
 	src/main.cpp
+	src/rcbot_vector.h
 )
 
 add_library(${PROJECT_NAME} SHARED)
