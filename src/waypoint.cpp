@@ -2309,7 +2309,7 @@ void WaypointDrawIndex( edict_t *pEntity, int index )
 	else if ( waypoint_flags & W_FL_WAIT_FOR_LIFT )
 		colour = Vector(100.0,100.0,100.0);
 	else if ( waypoint_flags & W_FL_ENDLEVEL )
-		colour = Vector(0.0,20.0,150.0);
+		colour = Vector(0.0,255.0,0.0);
 	else if ( waypoint_flags & W_FL_HUMAN_TOWER )
 		colour = Vector(200.0,100.0,200.0);
 	else if ( waypoint_flags & W_FL_OPENS_LATER )
