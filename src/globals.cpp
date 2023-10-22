@@ -286,7 +286,8 @@ void CBotGlobals :: StartFrame ( void )
 
 		if ( m_bBotCanRejoin == FALSE )
 		{		
-			if ( (m_fMapInitTime + 10) < gpGlobals->time )
+			// bots can start joining once brains have all saved and at least X seconds have passed
+			if (g_pending_brain_saves.getValue() == 0 && (m_fMapInitTime + 4) < gpGlobals->time )
 			{
 				if ( m_fBotRejoinTime < gpGlobals->time )
 				{
@@ -655,7 +656,7 @@ void CBotGlobals :: StartFrame ( void )
 						BotFunc_AddBot(NULL,NULL,NULL,NULL,NULL);
 						
 						m_bBotCanRejoin = FALSE;
-						m_fBotRejoinTime = gpGlobals->time + 2.0;	
+						m_fBotRejoinTime = gpGlobals->time + 0.1;	
 						
 						bAddBot = FALSE;
 					}

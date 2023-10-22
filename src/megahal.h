@@ -65,6 +65,8 @@ struct HAL_SWAP {
 #define HAL_COMMON_AUX "common_hal.aux"
 #define HAL_COMMON_TRN "common_hal.trn"
 
+extern ThreadSafeInt g_pending_brain_saves;
+
 class MegaHal {
 public:
     ~MegaHal();
