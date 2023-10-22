@@ -208,7 +208,7 @@ void HumanizeString ( char *string )
 
 	while ( i < length )
 	{
-		if ( ((i + 1) < length) && (RANDOM_LONG(0,100) < swap_percent) )
+		if ( ((i + 1) < length) && (RANDOM_LONG(0,1000) < swap_percent) )
 		{
 			temp = string[i];
 
@@ -220,7 +220,7 @@ void HumanizeString ( char *string )
 			continue;
 		}
 
-		if ( ((rand = RANDOM_LONG(0,100)) < drop_percent) ||
+		if ( ((rand = RANDOM_LONG(0,1000)) < drop_percent) ||
 			 ( ((string[n] < '0') && (string[n] > '9')) && (rand < drop_percent*2) ) )
 		{
 			n = i;
@@ -239,11 +239,11 @@ void HumanizeString ( char *string )
 		
 		if ( !isupper((byte)string[i]) && ((i == 0) || (string[i-1] == ' ')) )
 		{
-			if ( RANDOM_LONG(0,100) < (capitalise_percent * 2) )
+			if ( RANDOM_LONG(0,1000) < (capitalise_percent * 2) )
 				string[i] = toupper(string[i]);
 		}
 
-		if ( isupper((byte)string[i]) && (RANDOM_LONG(0,100) < lower_percent) )
+		if ( isupper((byte)string[i]) && (RANDOM_LONG(0,1000) < lower_percent) )
 			string[i] = tolower((byte)string[i]);
 
 		i++;		
