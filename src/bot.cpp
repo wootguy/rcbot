@@ -162,7 +162,9 @@ void CBot :: BotCommand ( void )
 
 	if ( m_fHoldAttackTime > gpGlobals->time )
 		PrimaryAttack();
-	
+	if (m_fHoldSecondaryTime > gpGlobals->time)
+		SecondaryAttack();
+
 	if ( m_CurrentTask )
 	{
 		switch ( m_CurrentTask->Task() )
@@ -1328,6 +1330,7 @@ void CBot :: Init ( void )
 	m_vLadderAngles = Vector(0,0,0);
 	m_fLastNoMove = 0;
 	m_fHoldAttackTime = 0;
+	m_fHoldSecondaryTime = 0;
 	m_bBuiltDispenser = 0;
 	m_bIsDisguised = 0;
 	m_fUseTeleporterTime = 0;
@@ -1720,6 +1723,7 @@ void CBot :: SpawnInit ( BOOL bInit )
 	m_fUpgradeTime = 0;
 
 	m_fHoldAttackTime = 0;
+	m_fHoldSecondaryTime = 0;
 	m_iGear = 0;
 	m_bNotFollowingWaypoint = FALSE;
 	m_fLastNoMove = 0.0;
@@ -4245,7 +4249,7 @@ void CBot :: LookForNewTasks ( void )
 			
 			break;
 		case MOD_SVENCOOP:
-			if ( (pEntity->v.waterlevel < 2) && (pev->waterlevel < 2) && (HasWeapon(SVEN_WEAPON_MEDKIT) && (pEntitypev->health < (pEntitypev->max_health*0.5)) && !pNearestHealablePlayer || (fDistance < fNearestHealablePlayerDist)) )
+			if ((pEntity->v.flags & FL_CLIENT) && STRING(pEntity->v.netname) && (pEntity->v.waterlevel < 2) && (pev->waterlevel < 2) && (HasWeapon(SVEN_WEAPON_MEDKIT) && (pEntitypev->health < (pEntitypev->max_health*0.5)) && !pNearestHealablePlayer || (fDistance < fNearestHealablePlayerDist)) )
 			{
 				pNearestHealablePlayer = pEntity;
 				fNearestHealablePlayerDist = fDistance;
@@ -9148,6 +9152,8 @@ void CBot :: RunPlayerMove ( void )
 
 	if ( m_fHoldAttackTime > gpGlobals->time ) 
 		PrimaryAttack();
+	if (m_fHoldSecondaryTime > gpGlobals->time)
+		SecondaryAttack();
 
 	if ( gBotGlobals.IsMod(MOD_TFC) )
 	{
@@ -14552,7 +14558,7 @@ void CBot :: DoTasks ()
 					bTaskFailed = TRUE;
 					break;
 				}
-				else if ( !EntityIsAlive(pPlayer) )
+				else if ( !EntityIsAlive(pPlayer) && gBotGlobals.m_iCurrentMod != MOD_SVENCOOP )
 					bDone = TRUE;
 				else if ( (pev->waterlevel > 1) || (pPlayer->v.waterlevel > 1) )
 					bTaskFailed = TRUE;
@@ -14676,18 +14682,34 @@ void CBot :: DoTasks ()
 								break;
 							}
 							
-							if ( pPlayer->v.health >= pPlayer->v.max_health )
+							bool playerIsDead = !EntityIsAlive(pPlayer);
+
+							if ( !playerIsDead && pPlayer->v.health >= pPlayer->v.max_health )
 							{
 								bDone = TRUE;
 								break;
 							}
-							
-							if ( DistanceFrom(EntityOrigin(pPlayer)) > 64 )
+
+							if (playerIsDead && pMedKit->PrimaryAmmo() < 50) {
+								bDone = TRUE;
+								break;
+							}
+
+							float curDist = DistanceFrom(EntityOrigin(pPlayer));
+							float moveDist = playerIsDead ? 32 : 64;
+
+							if (curDist > moveDist)
 								SetMoveVector(EntityOrigin(pPlayer));
 							else
 							{
-								if ( RANDOM_LONG(0,100) < 50 )
+								if ( !playerIsDead && RANDOM_LONG(0,100) < 50 )
 									PrimaryAttack();
+
+								if (playerIsDead) {
+									SecondaryAttack();
+									// revive cancels if not held down. Hold long enough to survive think delay
+									m_fHoldSecondaryTime = gpGlobals->time + 0.5f;
+								}
 								
 								StopMoving();
 							}
