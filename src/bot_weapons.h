@@ -146,6 +146,7 @@ enum
 #define SVEN_WEAPON_GRAPPLE       22
 #define SVEN_WEAPON_SNIPERRIFLE   23
 #define SVEN_WEAPON_M16           25
+#define SVEN_WEAPON_DISPLACER     29
 
 #define VALVE_MAX_NORMAL_BATTERY   100
 #define VALVE_HORNET_MAX_CARRY      8
@@ -837,6 +838,13 @@ public:
 	void UpdateWeapon ( int iClip )
 	{
 		m_iClip = iClip;
+	}
+
+	void SetSecondaryAmmo(int ammo)
+	{
+		if (m_iAmmo2) {
+			*m_iAmmo2 = ammo;
+		}
 	}
 
 	int getClip() {

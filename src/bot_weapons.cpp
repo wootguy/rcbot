@@ -189,6 +189,10 @@ void CWeapons :: AddWeapon ( int iId, const char *szClassname, int iPrimAmmoMax,
 			
 			m_Weapons[iId]->SetWeapon(iId,szClassname,iPrimAmmoMax,iSecAmmoMax,iHudSlot,iHudPosition,iFlags,iAmmoIndex1,iAmmoIndex2);
 		}
+		else {
+			// call again because weapons with the same ID in sven can change types (sven mp5 -> hl mp5)
+			m_Weapons[iId]->SetWeapon(iId, szClassname, iPrimAmmoMax, iSecAmmoMax, iHudSlot, iHudPosition, iFlags, iAmmoIndex1, iAmmoIndex2);
+		}
 	}
 }
 
@@ -562,13 +566,23 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 			{
 				GetNoWeaponArray(iAllowedWeapons);
 				GetArrayOfExplosives(iAllowedWeapons);//bExplosives = pEnemy->v.spawnflags & 512;
-					
+				
+				float fEnemyDist = (vEnemyOrigin - pBot->GetGunPosition()).Length();
+
 				if ( pBot->HasWeapon(VALVE_WEAPON_MP5) )
 				{
 					CBotWeapon *pWeapon = pBot->m_Weapons.GetWeapon(VALVE_WEAPON_MP5);
 						
-					if ( pWeapon->SecondaryAmmo() > 0 )
+					if ( pWeapon->SecondaryAmmo() > 0 && pWeapon->SecondaryInRange(fEnemyDist))
 						iAllowedWeapons[VALVE_WEAPON_MP5] = 1;
+				}
+				if (pBot->HasWeapon(SVEN_WEAPON_M16))
+				{
+					CBotWeapon* pWeapon = pBot->m_Weapons.GetWeapon(SVEN_WEAPON_M16);
+
+					if (pWeapon->SecondaryAmmo() > 0 && pWeapon->SecondaryInRange(fEnemyDist)) {
+						iAllowedWeapons[SVEN_WEAPON_M16] = 1;
+					}
 				}
 			}
 			if ((pEnemy->v.spawnflags & SF_BREAK_INSTANT))
@@ -592,12 +606,22 @@ int CBotWeapons :: GetBestWeaponId( CBot *pBot, edict_t *pEnemy )
 			GetArrayOfExplosives(iAllowedWeapons);
 			iAllowedWeapons[VALVE_WEAPON_EGON] = 1;	
 
+			float fEnemyDist = (vEnemyOrigin - pBot->GetGunPosition()).Length();
+
 			if ( pBot->HasWeapon(VALVE_WEAPON_MP5) )
 			{
 				CBotWeapon *pWeapon = pBot->m_Weapons.GetWeapon(VALVE_WEAPON_MP5);
 
-				if ( pWeapon->SecondaryAmmo() > 0 )
+
+				if ( pWeapon->SecondaryAmmo() > 0 && pWeapon->SecondaryInRange(fEnemyDist))
 					iAllowedWeapons[VALVE_WEAPON_MP5] = 1;
+			}
+			if (pBot->HasWeapon(SVEN_WEAPON_M16))
+			{
+				CBotWeapon* pWeapon = pBot->m_Weapons.GetWeapon(SVEN_WEAPON_M16);
+
+				if (pWeapon->SecondaryAmmo() > 0 && pWeapon->SecondaryInRange(fEnemyDist))
+					iAllowedWeapons[SVEN_WEAPON_M16] = 1;
 			}
 		}
 		break;
@@ -964,7 +988,7 @@ BOOL CBotWeapon :: CanShootPrimary ( edict_t *pEdict, float flFireDist, float fl
 
 	if ( gBotGlobals.IsMod(MOD_SVENCOOP) || gBotGlobals.IsMod(MOD_HL_DM) )
 	{
-		if ( GetID() == VALVE_WEAPON_RPG )
+		if ( GetID() == VALVE_WEAPON_RPG || GetID() == SVEN_WEAPON_DISPLACER)
 		{
 			if ( !m_pWeaponInfo->PrimaryInRange(flWallDist) )
 				return FALSE;
