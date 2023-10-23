@@ -2899,6 +2899,7 @@ private:
     CTypeVector<short int> m_fFeignPosition;
 */	
     float m_fHoldAttackTime;
+    float m_fHoldSecondaryTime;
 	
     void FlapWings (void);
 
