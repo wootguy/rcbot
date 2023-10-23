@@ -262,6 +262,10 @@ int BotNavigate_AStarAlgo ( CBot *pBot, int iFrom, int iTo, BOOL bContinue )
 	bBotCanUseFlyWpt = gBotGlobals.IsMod(MOD_NS) && ((pBot->IsFade() && pBot->hasBlink()) || pBot->IsLerk() || (pBot->IsMarine() && pBot->HasJetPack()));
 	bBotCanUseWallStickWpt = gBotGlobals.IsMod(MOD_TS) || (gBotGlobals.IsMod(MOD_NS) && bBotCanUseFlyWpt || pBot->IsSkulk());
 
+	if (gBotGlobals.IsMod(MOD_SVENCOOP) && pBot->HasWeapon(SVEN_WEAPON_GRAPPLE)) {
+		bBotCanUseFlyWpt = true;
+	}
+
 	Vector vGoalWptOrigin = WaypointOrigin(iTo);
 	Vector vOrigin;
 

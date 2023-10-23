@@ -2296,6 +2296,8 @@ void WaypointDrawIndex( edict_t *pEntity, int index )
 		colour = Vector(200.0,0.0,0.0);
 	else if ( waypoint_flags & W_FL_GREN_THROW )
 		colour = Vector(10.0,127.0,10.0);
+	else if ( waypoint_flags & W_FL_FLY )
+		colour = Vector(200.0,255.0,0.0);
 	else if ( waypoint_flags & W_FL_CROUCH )
 		colour = Vector(200.0,100.0,100.0);
 	else if ( waypoint_flags & W_FL_CROUCHJUMP )
@@ -2304,8 +2306,6 @@ void WaypointDrawIndex( edict_t *pEntity, int index )
 		colour = Vector(150.0,150.0,150.0);
 	else if ( waypoint_flags & W_FL_TANK )
 		colour = Vector(200.0,100.0,0.0);
-	else if ( waypoint_flags & W_FL_FLY )
-		colour = Vector(0.0,50.0,150.0);
 	else if ( waypoint_flags & W_FL_WAIT_FOR_LIFT )
 		colour = Vector(100.0,100.0,100.0);
 	else if ( waypoint_flags & W_FL_ENDLEVEL )

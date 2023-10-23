@@ -2913,6 +2913,13 @@ eClimbType CBot :: GetClimbType ( void )
 			}
 		}
 		break;
+	case MOD_SVENCOOP:
+		if (m_iCurrentWaypointIndex != -1)
+		{
+			if (m_iCurrentWaypointFlags & W_FL_FLY)
+				return BOT_CLIMB_FLYING;
+		}
+		break;
 	default:
 		break;
 	}
@@ -7771,6 +7778,13 @@ void CBot :: WorkViewAngles ( void )
 		}
 		break;
 	}
+
+	if (gBotGlobals.m_iCurrentMod == MOD_SVENCOOP) {
+		if (GetClimbType() == BOT_CLIMB_FLYING && m_iCurrentWaypointIndex != -1) {
+			SetViewAngles(WaypointOrigin(m_iCurrentWaypointIndex));
+		}
+	}
+	
 }
 
 // ChangeAngles - adpated by Whistler (http://forums.bots-united.com/member.php?u=786)
@@ -8102,6 +8116,11 @@ void CBot :: SetViewAngles ( const Vector &pOrigin )
 		vAngles = UTIL_VecToAngles(vComponent);
 		UTIL_FixAngles(&vAngles);
 	}
+	else if (iClimbType == BOT_CLIMB_FLYING && gBotGlobals.m_iCurrentMod == MOD_SVENCOOP) {
+		vComponent = m_vMoveToVector - GetGunPosition();
+		vAngles = UTIL_VecToAngles(vComponent);
+		UTIL_FixAngles(&vAngles);
+	}
 	else if ( bCanClimb && LadderAnglesSet() )		
 	{
 		vAngles = GetLadderAngles();
@@ -8333,147 +8352,175 @@ void CBot :: WorkMoveDirection ( void )
 			}
 		}		
 	}
+
 	
-	switch ( gBotGlobals.m_iCurrentMod )
+	
+	switch (gBotGlobals.m_iCurrentMod)
 	{
 	case MOD_NS:
-		{		
-			int iPrevWaypointFlags = WaypointFlags(m_iPrevWaypointIndex);
+	{
+		int iPrevWaypointFlags = WaypointFlags(m_iPrevWaypointIndex);
 
-			BOOL bLeaderWalking = TRUE;
-			
-			if ( m_pSquadLeader && HasCondition(BOT_CONDITION_SEE_SQUAD_LEADER) )
-				bLeaderWalking = UTIL_OnGround(&m_pSquadLeader->v);
+		BOOL bLeaderWalking = TRUE;
+
+		if (m_pSquadLeader && HasCondition(BOT_CONDITION_SEE_SQUAD_LEADER))
+			bLeaderWalking = UTIL_OnGround(&m_pSquadLeader->v);
 
 
-			if ( (m_iCurrentWaypointFlags & W_FL_FLY) || (iPrevWaypointFlags & W_FL_FLY) ||
-				(m_iCurrentWaypointFlags & W_FL_LADDER) || (iPrevWaypointFlags & W_FL_LADDER) ||
-				(m_iCurrentWaypointFlags & W_FL_WALL_STICK) || (iPrevWaypointFlags & W_FL_WALL_STICK) ||
-				!bLeaderWalking )
+		if ((m_iCurrentWaypointFlags & W_FL_FLY) || (iPrevWaypointFlags & W_FL_FLY) ||
+			(m_iCurrentWaypointFlags & W_FL_LADDER) || (iPrevWaypointFlags & W_FL_LADDER) ||
+			(m_iCurrentWaypointFlags & W_FL_WALL_STICK) || (iPrevWaypointFlags & W_FL_WALL_STICK) ||
+			!bLeaderWalking)
+		{
+			if (m_vMoveToVector.z > pev->absmin.z)
 			{
-				if ( m_vMoveToVector.z > pev->absmin.z )
+				if (IsLerk() || (IsMarine() && HasJetPack() && !(m_iCurrentWaypointFlags & W_FL_LADDER)))
 				{
-					if ( IsLerk() || (IsMarine() && HasJetPack() && !(m_iCurrentWaypointFlags & W_FL_LADDER) ) )
+					if (!onGround())
 					{
-						if ( !onGround() )
+						if ((pev->absmin.z - m_fStartFlyHeight) > m_fPrevFlyHeight)
+							m_fPrevFlyHeight = pev->absmin.z - m_fStartFlyHeight;
+
+						m_bFlappedWings = TRUE;
+					}
+					else
+					{
+						m_fStartFlyHeight = pev->absmin.z;
+
+						if (m_bFlappedWings)
 						{
-							if ( (pev->absmin.z - m_fStartFlyHeight) > m_fPrevFlyHeight )
-								m_fPrevFlyHeight = pev->absmin.z - m_fStartFlyHeight;
-							
-							m_bFlappedWings = TRUE;
-						}
-						else
-						{
-							m_fStartFlyHeight = pev->absmin.z;
-							
-							if ( m_bFlappedWings )
-							{					
-								m_pFlyGAVals->setFitness(m_fPrevFlyHeight);
+							m_pFlyGAVals->setFitness(m_fPrevFlyHeight);
 
-								IIndividual *newCopy = m_pFlyGAVals->copy(); 
-								
-								m_pFlyGA->addToPopulation(newCopy);
-								
-								if ( m_pFlyGA->canPick() )
-								{
-									IIndividual *ind = m_pFlyGA->pick();
+							IIndividual* newCopy = m_pFlyGAVals->copy();
 
-									dec_flapWings->setTrained();
-									
-									m_pFlyGAVals->freeMemory();
-									delete m_pFlyGAVals;
-									
-									m_pFlyGAVals = (CBotGAValues*)ind;
-									m_pFlyGAVals->setFitness(0);
+							m_pFlyGA->addToPopulation(newCopy);
 
-									float x1 = m_pFlyGAVals->get(0);
-									float x2 = m_pFlyGAVals->get(1);
+							if (m_pFlyGA->canPick())
+							{
+								IIndividual* ind = m_pFlyGA->pick();
 
-									if ( x1 < 0.01 )
-										x1 = 0.01;
-									if ( x2 < 0.01 )
-										x2 = 0.01;
-									if ( x1 > 0.2 )
-										x1 = 0.2;
-									if ( x2 > 0.2 )
-										x2 = 0.2;
+								dec_flapWings->setTrained();
 
-									m_pFlyGAVals->set(0,x1);
-									m_pFlyGAVals->set(1,x2);
-								}
-								else
-								{
-									m_pFlyGAVals->clear();
-									// custom : lerk hold & flap time
-									m_pFlyGAVals->add(RANDOM_FLOAT(0,0.2)); // 0
-									m_pFlyGAVals->add(RANDOM_FLOAT(0,0.2)); // 1
+								m_pFlyGAVals->freeMemory();
+								delete m_pFlyGAVals;
 
-									m_pFlyGAVals->add(0.3-RANDOM_FLOAT(0,6)); // 2
-									m_pFlyGAVals->add(0.3-RANDOM_FLOAT(0,6)); // 3
-									m_pFlyGAVals->add(0.3-RANDOM_FLOAT(0,6)); // 4
-									m_pFlyGAVals->add(0.3-RANDOM_FLOAT(0,6)); // 5
-								}
-								
+								m_pFlyGAVals = (CBotGAValues*)ind;
+								m_pFlyGAVals->setFitness(0);
+
+								float x1 = m_pFlyGAVals->get(0);
+								float x2 = m_pFlyGAVals->get(1);
+
+								if (x1 < 0.01)
+									x1 = 0.01;
+								if (x2 < 0.01)
+									x2 = 0.01;
+								if (x1 > 0.2)
+									x1 = 0.2;
+								if (x2 > 0.2)
+									x2 = 0.2;
+
+								m_pFlyGAVals->set(0, x1);
+								m_pFlyGAVals->set(1, x2);
+							}
+							else
+							{
+								m_pFlyGAVals->clear();
+								// custom : lerk hold & flap time
+								m_pFlyGAVals->add(RANDOM_FLOAT(0, 0.2)); // 0
+								m_pFlyGAVals->add(RANDOM_FLOAT(0, 0.2)); // 1
+
+								m_pFlyGAVals->add(0.3 - RANDOM_FLOAT(0, 6)); // 2
+								m_pFlyGAVals->add(0.3 - RANDOM_FLOAT(0, 6)); // 3
+								m_pFlyGAVals->add(0.3 - RANDOM_FLOAT(0, 6)); // 4
+								m_pFlyGAVals->add(0.3 - RANDOM_FLOAT(0, 6)); // 5
 							}
 
-							m_bFlappedWings = FALSE;
-							m_fPrevFlyHeight = 0;
 						}
 
-						vector<ga_value> inputs;
-
-						float fEnergy = NS_AmountOfEnergy();
-
-						inputs.push_back(fEnergy*0.01f);
-						inputs.push_back((m_vMoveToVector.z - pev->absmin.z));///(pev->size.z/2));
-						inputs.push_back(pev->velocity.z);///(pev->maxspeed*0.33));
-						inputs.push_back(m_pFlyGAVals->get(1));
-
-						dec_flapWings->setWeights(m_pFlyGAVals,2,4);
-
-						dec_flapWings->input(&inputs);
-						dec_flapWings->execute();
-
-						if ( (fEnergy==100) || (!dec_flapWings->trained() || dec_flapWings->fired()) )//(NS_AmountOfEnergy()*0.01 > m_pFlyGAVals->get(2)) )//!dec_flapWings->trained() || dec_flapWings->fired () )
-						{
-							FlapWings();
-							//BotMessage(NULL,0,"%s flappin ma wings",m_szBotName);
-						}
-						else
-						{
-							//BotMessage(NULL,0,"%s havin' a rest",m_szBotName);
-							StopMoving();
-
-							if ( m_CurrentLookTask == BOT_LOOK_TASK_NEXT_WAYPOINT )
-								m_CurrentLookTask = BOT_LOOK_TASK_LOOK_AROUND;
-						}
-
-						inputs.clear();
+						m_bFlappedWings = FALSE;
+						m_fPrevFlyHeight = 0;
 					}
-					// check again
-					/*else if ( !(m_iCurrentWaypointFlags & W_FL_LADDER) && (IsMarine() && HasJetPack()) )
-					{
-						// enough fuel?
-						if ( NS_AmountOfEnergy() > 75 )
-						{
-							// hold in jump most of the time (use jetpack)
-							if ( RANDOM_LONG(0,50) > 1 )
-								Jump();
-						}
-						// Don't stop moving If I am trying to shoot an enemy with melee weapon
-						else if ( !m_pEnemy || !m_pCurrentWeapon || !m_pCurrentWeapon->IsMelee() )
-						{
-							// get some jet pack fuel back first
-							StopMoving();
 
-							if ( m_CurrentLookTask == BOT_LOOK_TASK_NEXT_WAYPOINT )
-								m_CurrentLookTask = BOT_LOOK_TASK_LOOK_AROUND;
-						}
-					}*/
+					vector<ga_value> inputs;
+
+					float fEnergy = NS_AmountOfEnergy();
+
+					inputs.push_back(fEnergy * 0.01f);
+					inputs.push_back((m_vMoveToVector.z - pev->absmin.z));///(pev->size.z/2));
+					inputs.push_back(pev->velocity.z);///(pev->maxspeed*0.33));
+					inputs.push_back(m_pFlyGAVals->get(1));
+
+					dec_flapWings->setWeights(m_pFlyGAVals, 2, 4);
+
+					dec_flapWings->input(&inputs);
+					dec_flapWings->execute();
+
+					if ((fEnergy == 100) || (!dec_flapWings->trained() || dec_flapWings->fired()))//(NS_AmountOfEnergy()*0.01 > m_pFlyGAVals->get(2)) )//!dec_flapWings->trained() || dec_flapWings->fired () )
+					{
+						FlapWings();
+						//BotMessage(NULL,0,"%s flappin ma wings",m_szBotName);
+					}
+					else
+					{
+						//BotMessage(NULL,0,"%s havin' a rest",m_szBotName);
+						StopMoving();
+
+						if (m_CurrentLookTask == BOT_LOOK_TASK_NEXT_WAYPOINT)
+							m_CurrentLookTask = BOT_LOOK_TASK_LOOK_AROUND;
+					}
+
+					inputs.clear();
+				}
+				// check again
+				/*else if ( !(m_iCurrentWaypointFlags & W_FL_LADDER) && (IsMarine() && HasJetPack()) )
+				{
+					// enough fuel?
+					if ( NS_AmountOfEnergy() > 75 )
+					{
+						// hold in jump most of the time (use jetpack)
+						if ( RANDOM_LONG(0,50) > 1 )
+							Jump();
+					}
+					// Don't stop moving If I am trying to shoot an enemy with melee weapon
+					else if ( !m_pEnemy || !m_pCurrentWeapon || !m_pCurrentWeapon->IsMelee() )
+					{
+						// get some jet pack fuel back first
+						StopMoving();
+
+						if ( m_CurrentLookTask == BOT_LOOK_TASK_NEXT_WAYPOINT )
+							m_CurrentLookTask = BOT_LOOK_TASK_LOOK_AROUND;
+					}
+				}*/
+			}
+		}
+	}
+	break;
+	case MOD_SVENCOOP:
+	{
+		if (iCurrentClimbState == BOT_CLIMB_FLYING && m_CurrentTask && m_iCurrentWaypointIndex != -1) {
+			Vector wapointOri = WaypointOrigin(m_iCurrentWaypointIndex);
+			bool isAboveGrapplePoint = wapointOri.z < pev->origin.z;
+			bool reachedGrapplePoint = (wapointOri - pev->origin).Length() < 96;
+
+			if (reachedGrapplePoint) {
+				m_fHoldAttackTime = 0;
+			}
+
+			if (!isAboveGrapplePoint && !reachedGrapplePoint) {
+				StopMoving();
+
+				CBotTask grapTask = CBotTask(BOT_TASK_CHANGE_WEAPON, m_CurrentTask->GetScheduleId(), NULL, SVEN_WEAPON_GRAPPLE, 0.0, Vector(0, 0, 0), m_CurrentTask->TimeToComplete());
+				if (!IsCurrentWeapon(SVEN_WEAPON_GRAPPLE) && !m_Tasks.HasTask(grapTask)) {
+					AddPriorityTask(grapTask);
+				}
+				else {
+					PrimaryAttack();
+					m_fHoldAttackTime = gpGlobals->time + 1.0f;
 				}
 			}
 		}
 		break;
+	}
 	default:
 		break;
 	}
@@ -16736,6 +16783,11 @@ void CBot :: DoTasks ()
 
 		// end TASK CODE
 	}
+}
+
+BOOL CBot::CanFly(void)
+{
+	return (IsLerk() || (IsMarine() && HasJetPack())) || (gBotGlobals.IsMod(MOD_SVENCOOP) && HasWeapon(SVEN_WEAPON_GRAPPLE));
 }
 
 BOOL CBot :: PrimaryAttack           ( void ) 
