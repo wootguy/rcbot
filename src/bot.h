@@ -3797,10 +3797,7 @@ public:
 	}
 	
 	// if bot can fly, this will return true
-	BOOL CanFly (void)
-	{
-		return (IsLerk() || (IsMarine() && HasJetPack()));
-	}
+	BOOL CanFly(void);
 
 	// set crouch button
 	inline void     Duck                    ( void )
