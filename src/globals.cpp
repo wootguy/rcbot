@@ -746,6 +746,7 @@ void CBotGlobals :: StartFrame ( void )
 								pBot->m_Weapons.RemoveWeapons();
 								pBot->m_iBotWeapons = 0;
 								edict_t* botEnt = pBot->m_pEdict;
+								CBasePlayer* basePlr = (CBasePlayer*)GET_PRIVATE(botEnt);
 
 								for (int i = gpGlobals->maxClients+1; i < gpGlobals->maxEntities; i++) {
 									edict_t* ent = INDEXENT(i);
@@ -769,8 +770,13 @@ void CBotGlobals :: StartFrame ( void )
 										pBot->m_iBotWeapons |= 1 << id;
 										pBot->m_Weapons.AddWeapon(id);
 										
+										CBotWeapon* wepinfo = pBot->m_Weapons.GetWeapon(id);
+
 										CBasePlayerWeapon* baseWep = (CBasePlayerWeapon*)GET_PRIVATE(ent);
-										pBot->m_Weapons.GetWeapon(id)->UpdateWeapon(baseWep->m_iClip);
+										wepinfo->UpdateWeapon(baseWep->m_iClip);
+										
+										if (baseWep->m_iSecondaryAmmoType >= 0 && baseWep->m_iSecondaryAmmoType < 32)
+											wepinfo->SetSecondaryAmmo(basePlr->m_rgAmmo[baseWep->m_iSecondaryAmmoType]);
 									}
 								}
 							}

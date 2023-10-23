@@ -6931,6 +6931,12 @@ BOOL CBot :: CanAvoid ( edict_t *pEntity, float fDistanceToEntity, float fAvoidD
 			//}
 	//	}
 
+			if (FStrEq(szClassname, "displacer_portal")) {
+				bool willHurt = pEntity->v.owner && ((pEntity->v.owner == m_pEdict) || !(pEntity->v.owner->v.flags & FL_CLIENT));
+				if (willHurt && fDistanceToEntity < 512)
+					return TRUE;
+			}
+
 		// NOT a weapon or ammo (strncmp will return -1 or 1)
 			if ( strncmp(szClassname,"rpg_rocket",10) )
 			{
@@ -15662,7 +15668,7 @@ void CBot :: DoTasks ()
 									SecondaryAttack();
 									m_bZoom = TRUE;
 								}
-							}							
+							}
 						}
 						
 						if ( gBotGlobals.IsMod(MOD_BG) && !m_pCurrentWeapon->IsMelee() )
@@ -15678,8 +15684,20 @@ void CBot :: DoTasks ()
 						}
 						else
 						{
-							
-							if ( (m_fHoldAttackTime > gpGlobals->time) || (RANDOM_LONG(0,100) < iFirePercent) )
+							bool forceSecondary = false;
+							bool hasArGrenadeWeapon = IsCurrentWeapon(SVEN_WEAPON_M16) || IsCurrentWeapon(VALVE_WEAPON_MP5);
+
+							if (gBotGlobals.IsMod(MOD_SVENCOOP) && hasArGrenadeWeapon) {
+								bool enemyBreakable = FStrEq(STRING(m_pEnemy->v.classname), "func_breakable");
+								bool enemyGarg = FStrEq(STRING(m_pEnemy->v.classname), "monster_gargantua");
+
+								if (enemyGarg || (enemyBreakable && (m_pEnemy->v.spawnflags & SF_BREAK_EXPLOSIVES))) {
+									forceSecondary = true;
+								}
+							}
+
+							bool shouldFirePrimary = (m_fHoldAttackTime > gpGlobals->time) || (RANDOM_LONG(0, 100) < iFirePercent);
+							if (shouldFirePrimary && !forceSecondary)
 							{										
 								//	if ( DotProductFromOrigin(&vEnemyOrigin) > 0.8 )
 								//	{
