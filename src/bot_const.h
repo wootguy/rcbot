@@ -50,7 +50,7 @@
 
 #define EXPLODE_RADIUS 300
 
-#define MAX_WAYPOINTS 1024
+#define MAX_WAYPOINTS 2048
 
 #define FL_ASTAR_OPEN (1<<0)
 #define FL_ASTAR_CLOSED (1<<1)
