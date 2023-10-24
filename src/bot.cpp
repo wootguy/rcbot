@@ -14743,9 +14743,8 @@ void CBot :: DoTasks ()
 							}
 
 							float curDist = DistanceFrom(EntityOrigin(pPlayer));
-							float moveDist = playerIsDead ? 32 : 64;
 
-							if (curDist > moveDist)
+							if (curDist > 64)
 								SetMoveVector(EntityOrigin(pPlayer));
 							else
 							{
