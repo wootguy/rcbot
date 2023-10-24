@@ -16817,6 +16817,10 @@ return FALSE;
 			break;
 		}
 	}
+
+	if (gBotGlobals.IsMod(MOD_SVENCOOP) && IsCurrentWeapon(VALVE_WEAPON_EGON)) {
+		m_fHoldAttackTime = gpGlobals->time + 0.2f;
+	}
 	
 	pev->button |= IN_ATTACK; 
 	
