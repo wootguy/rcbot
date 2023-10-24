@@ -138,7 +138,6 @@ enum
  VALVE_WEAPON_SNARK
 };
 
-#define SVEN_WEAPON_UZIAKIMBO	  16
 #define SVEN_WEAPON_UZI	          17
 #define SVEN_WEAPON_MEDKIT        18
 #define SVEN_WEAPON_PIPEWRENCH    20

@@ -1901,7 +1901,13 @@ void BotClient_Generic_CurrentWeapon :: execute ( void *p, int iIndex )
     /*WEAPON_ON_TARGET    = 0x01,
     WEAPON_IS_CURRENT    = 0x02,
     WEAPON_IS_ENABLED    = 0x04*/
-			if ( (gBotGlobals.IsNS()&&(iState & WEAPON_IS_CURRENT)) || (iState == 1) )
+
+			bool weaponIsCurrent = iState == 1;
+			if (gBotGlobals.IsMod(MOD_SVENCOOP) && iId == SVEN_WEAPON_UZI && iState == 5) {
+				weaponIsCurrent = true; // akimbo mode
+			}
+
+			if ( (gBotGlobals.IsNS()&&(iState & WEAPON_IS_CURRENT)) || weaponIsCurrent)
 			{			
 
 				pBot->m_Weapons.AddWeapon(iId);
