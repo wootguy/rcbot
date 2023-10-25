@@ -1124,6 +1124,8 @@ int BotNavigate_FindNextWaypoint ( CBot *pBot )
 	return -1;
 }
 
+extern PATH* paths[MAX_WAYPOINTS];
+
 BOOL BotNavigate_UpdateWaypoint ( CBot *pBot )
 // updates the bot's current waypoint
 // checks if the bot has touched its waypoint
@@ -1393,6 +1395,15 @@ BOOL BotNavigate_UpdateWaypoint ( CBot *pBot )
 		else // get closer before crouching
 			bTouchedWpt = (fDistance <= 24);
 
+	}
+	else if (iWptFlags & W_FL_PAIN)
+	{
+		if ((!paths[iCurrWpt] || !paths[iCurrWpt]->next) && pBot->IsAlive() && (pBot->pev->origin - vWptOrigin).Length() < 32) {
+			if (gBotGlobals.IsDebugLevelOn(BOT_DEBUG_THINK_LEVEL)) {
+				DebugMessage(BOT_DEBUG_THINK_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "%s killed themselves after reaching a pain/death waypoint with no outward paths", pBot->m_szBotName);
+			}
+			FakeClientCommand(pBot->m_pEdict, "gibme");
+		}
 	}
 
 	/*
