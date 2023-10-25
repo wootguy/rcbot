@@ -98,103 +98,90 @@ void SetupMenus (int waypointIdx)
 
 	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_TEAM_SPEC].AddExitMenuItem(5);
 
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS] = CBotMenu("Give Flags");
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS] = CBotMenu("Give Flags (1/3)");
 	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS].AddMenuItem(1, ICOLOR("Jump", W_FL_JUMP),BotMenu_Func_Jump_Waypoint);
 	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS].AddMenuItem(2, ICOLOR("Crouch-Jump", W_FL_CROUCHJUMP),BotMenu_Func_CrouchJump_Waypoint);
 	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS].AddMenuItem(3, ICOLOR("Crouch", W_FL_CROUCH),BotMenu_Func_Crouch_Waypoint);
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS].AddMenuItem(4,"More Flags",&gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2]);
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS].AddExitMenuItem(5);
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS].AddMenuItem(4, ICOLOR("Ladder", W_FL_LADDER), BotMenu_Func_Ladder_Waypoint);
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS].AddMenuItem(5, ICOLOR("Stay Close To", W_FL_STAY_NEAR), BotMenu_Func_StayClose_Waypoint);
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS].AddMenuItem(6, ICOLOR("Teleport", W_FL_TELEPORT), BotMenu_Func_Teleport_Waypoint);
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS].AddMenuItem(7, ICOLOR("Fly/Grapple\n\n", W_FL_FLY), BotMenu_Func_Fly_Waypoint);
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS].AddMenuItem(9,"More",&gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2]);
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS].AddExitMenuItem(0);
 
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2] = CBotMenu("Give More Flags...");
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(1, ICOLOR("Lift Button", W_FL_LIFT), BotMenu_Func_Lift_Waypoint);
 
-	if ( gBotGlobals.IsMod(MOD_TS) )
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(2,"Stunt",BotMenu_Func_Wall_Stick_Waypoint);
-	else if ( gBotGlobals.IsMod(MOD_SVENCOOP) || gBotGlobals.IsMod(MOD_TFC) )
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(2, ICOLOR("Pain/Death", W_FL_PAIN),BotMenu_Func_Wall_Stick_Waypoint);
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2] = CBotMenu("Give Flags (2/3)");
+	if (gBotGlobals.IsMod(MOD_BG))
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(1, "Capture Point", BotMenu_Func_EndLevel_Waypoint);
+	else if (gBotGlobals.IsMod(MOD_HL_RALLY))
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(1, "End of Race/New Lap", BotMenu_Func_EndLevel_Waypoint);
+	else if (gBotGlobals.IsMod(MOD_TFC))
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(1, "Detpack (Also add \"Opens Later\" point at other side)", BotMenu_Func_EndLevel_Waypoint);
 	else
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(2,"Wall-Stick",BotMenu_Func_Wall_Stick_Waypoint);
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(3, ICOLOR("Fly/Grapple", W_FL_FLY),BotMenu_Func_Fly_Waypoint);
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(4,"More Flags",&gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3]);
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddExitMenuItem(5);
-
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3] = CBotMenu("Give More Flags...");
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(1, ICOLOR("Teleport", W_FL_TELEPORT),BotMenu_Func_Teleport_Waypoint);
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(2, ICOLOR("Tank", W_FL_TANK),BotMenu_Func_Tank_Waypoint);
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(3, ICOLOR("Wait For Lift", W_FL_WAIT_FOR_LIFT),BotMenu_Func_WaitLift_Waypoint);
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(4,"More Flags",&gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS4]);
-
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddExitMenuItem(5);
-
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS4] = CBotMenu("Give More Flags...");
-
-	if ( gBotGlobals.IsMod(MOD_BG) )
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS4].AddMenuItem(1,"Capture Point",BotMenu_Func_EndLevel_Waypoint);
-	else if ( gBotGlobals.IsMod(MOD_HL_RALLY) )
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS4].AddMenuItem(1,"End of Race/New Lap",BotMenu_Func_EndLevel_Waypoint);
-	else if ( gBotGlobals.IsMod(MOD_TFC) )
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS4].AddMenuItem(1,"Detpack (Also add \"Opens Later\" point at other side)",BotMenu_Func_EndLevel_Waypoint);
-	else
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS4].AddMenuItem(1, ICOLOR("End Of Level/Objective", W_FL_ENDLEVEL),BotMenu_Func_EndLevel_Waypoint);
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(1, ICOLOR("End Of Level/Objective", W_FL_ENDLEVEL), BotMenu_Func_EndLevel_Waypoint);
 	
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(2, ICOLOR("Opens Later", W_FL_OPENS_LATER), BotMenu_Func_OpensLater_Waypoint);
 
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS4].AddMenuItem(2, ICOLOR("Stay Close To", W_FL_STAY_NEAR),BotMenu_Func_StayClose_Waypoint);
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS4].AddMenuItem(3, ICOLOR("Opens Later", W_FL_OPENS_LATER),BotMenu_Func_OpensLater_Waypoint);
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS4].AddMenuItem(4,"More Flags",&gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS5]);
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS4].AddExitMenuItem(5);
+	if (gBotGlobals.IsMod(MOD_TS))
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(3, "Stunt", BotMenu_Func_Wall_Stick_Waypoint);
+	else if (gBotGlobals.IsMod(MOD_SVENCOOP) || gBotGlobals.IsMod(MOD_TFC))
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(3, ICOLOR("Pain/Death", W_FL_PAIN), BotMenu_Func_Wall_Stick_Waypoint);
+	else
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(3, "Wall-Stick", BotMenu_Func_Wall_Stick_Waypoint);
+	
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(4, ICOLOR("Wait For Lift", W_FL_WAIT_FOR_LIFT),BotMenu_Func_WaitLift_Waypoint);
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(5, ICOLOR("Check for lift", W_FL_CHECK_LIFT), BotMenu_CheckForLift_Waypoint);
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(6, ICOLOR("Lift Button", W_FL_LIFT), BotMenu_Func_Lift_Waypoint);
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(7, ICOLOR("Human Tower\n", W_FL_HUMAN_TOWER), BotMenu_Func_HumanTower_Waypoint);
 
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS5] = CBotMenu("Give More Flags...");
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS5].AddMenuItem(1, ICOLOR("Human Tower", W_FL_HUMAN_TOWER),BotMenu_Func_HumanTower_Waypoint);
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS5].AddMenuItem(2, ICOLOR("Un-Reachable", W_FL_UNREACHABLE),BotMenu_Func_Unreachable_Waypoint);
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS5].AddMenuItem(3, ICOLOR("Ladder", W_FL_LADDER),BotMenu_Func_Ladder_Waypoint);
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS5].AddMenuItem(4,"More Flags",&gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS6]);
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS5].AddExitMenuItem(5);
-
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS6] = CBotMenu("More Waypoint Flags...");
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(8,"Back",&gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS]);
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddMenuItem(9,"More",&gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3]);
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2].AddExitMenuItem(0);
 
 
-	if ( gBotGlobals.IsMod(MOD_TFC) )
+
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3] = CBotMenu("Give Flags (3/3)");
+
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(1, ICOLOR("Tank", W_FL_TANK), BotMenu_Func_Tank_Waypoint);
+	
+	if (gBotGlobals.IsMod(MOD_TFC))
 	{
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS6].AddMenuItem(1,"Sniper Point",Bot_Menu_GrenThrow_Waypoint);
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS6].AddMenuItem(2,"Sentry Point",BotMenu_Func_Pushable_Waypoint);
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS6].AddMenuItem(3,"Flag Point",BotMenu_Func_Sci_Waypoint);
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(2, "Sniper Point", Bot_Menu_GrenThrow_Waypoint);
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(3, "Sentry Point", BotMenu_Func_Pushable_Waypoint);
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(4, "Flag Point", BotMenu_Func_Sci_Waypoint);
 	}
 	else
 	{
-		if ( gBotGlobals.IsMod(MOD_HL_RALLY) )
-			gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS6].AddMenuItem(1,"Start of Race",Bot_Menu_Important_Waypoint);
-		else if ( gBotGlobals.IsMod(MOD_SVENCOOP) )
-			gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS6].AddMenuItem(1, ICOLOR("Throw Grenade", W_FL_GREN_THROW),Bot_Menu_GrenThrow_Waypoint);
+		if (gBotGlobals.IsMod(MOD_HL_RALLY))
+			gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(2, "Start of Race", Bot_Menu_Important_Waypoint);
+		else if (gBotGlobals.IsMod(MOD_SVENCOOP))
+			gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(2, ICOLOR("Throw Grenade", W_FL_GREN_THROW), Bot_Menu_GrenThrow_Waypoint);
 		else
-			gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS6].AddMenuItem(1,"Important Waypoint",Bot_Menu_Important_Waypoint);	
-		
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS6].AddMenuItem(2, ICOLOR("Pushable Point", W_FL_PUSHABLE),BotMenu_Func_Pushable_Waypoint);
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS6].AddMenuItem(3, ICOLOR("Scientist Point", W_FL_SCIENTIST_POINT),BotMenu_Func_Sci_Waypoint);
+			gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(2, "Important Waypoint", Bot_Menu_Important_Waypoint);
+
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(3, ICOLOR("Pushable Point", W_FL_PUSHABLE), BotMenu_Func_Pushable_Waypoint);
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(4, ICOLOR("Scientist Point", W_FL_SCIENTIST_POINT), BotMenu_Func_Sci_Waypoint);
 	}
 
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS6].AddMenuItem(4,"More Flags",&gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS7]);
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS6].AddExitMenuItem(5);
-
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS7] = CBotMenu("More Waypoint Flags...");
-
-	if ( gBotGlobals.IsMod(MOD_TFC) )
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS7].AddMenuItem(1,"Capture Point",BotMenu_Func_Barney_Waypoint);
+	if (gBotGlobals.IsMod(MOD_TFC))
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(5, "Capture Point", BotMenu_Func_Barney_Waypoint);
 	else
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS7].AddMenuItem(1, ICOLOR("Barney Point", W_FL_BARNEY_POINT),BotMenu_Func_Barney_Waypoint);
-
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS7].AddMenuItem(2, ICOLOR("Check for lift", W_FL_CHECK_LIFT),BotMenu_CheckForLift_Waypoint);
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(5, ICOLOR("Barney Point", W_FL_BARNEY_POINT), BotMenu_Func_Barney_Waypoint);
 
 	//if ( gBotGlobals.IsMod(MOD_TFC) )
-	//	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS7].AddMenuItem(3,"Defend Zone",BotMenu_Func_Defend_Waypoint);
+	//	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(3,"Defend Zone",BotMenu_Func_Defend_Waypoint);
 	/*else*/
-	if ( gBotGlobals.IsMod(MOD_COUNTERSTRIKE) )
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS7].AddMenuItem(3,"VIP Rescue Zone",BotMenu_Func_Defend_Waypoint);
-	else if ( gBotGlobals.IsMod(MOD_NS) )
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS7].AddMenuItem(3,"Marine Building",BotMenu_Func_Defend_Waypoint);
+	if (gBotGlobals.IsMod(MOD_COUNTERSTRIKE))
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(6, "VIP Rescue Zone", BotMenu_Func_Defend_Waypoint);
+	else if (gBotGlobals.IsMod(MOD_NS))
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(6, "Marine Building", BotMenu_Func_Defend_Waypoint);
 	else
-		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS7].AddMenuItem(3,"Defend Zone",BotMenu_Func_Defend_Waypoint);
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(6, "Defend Zone", BotMenu_Func_Defend_Waypoint);
 
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS7].AddExitMenuItem(5);
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(7, ICOLOR("Un-Reachable\n\n", W_FL_UNREACHABLE), BotMenu_Func_Unreachable_Waypoint);
+
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddMenuItem(8, "Back", &gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS2]);
+	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_GIVE_FLAGS3].AddExitMenuItem(0);
 
 
 
@@ -395,19 +382,20 @@ void CBotMenu :: Render ( CClient *pClient )
 	
 	sprintf(szMenuText,"%s\n-----\nOptions:\n",m_szCaption);	
 
-	for ( i = 0; i < 10; i ++ )
+	for ( i = 1; i <= 10; i ++ )
 	{
-		if ( m_Menus[i] != NULL )
+		int k = i % 10;
+		if ( m_Menus[k] != NULL )
 		{			
-			if ( i == 0 )
+			if (k == 0 )
 				iSlots |= (1<<9);
 			else
-				iSlots |= (1<<(i-1));
+				iSlots |= (1<<(k -1));
 
-			if ( m_Menus[i]->HasNextMenu() )
-				sprintf(szMenuItemText,"%d. %s...\n",i,m_Menus[i]->GetCaption());
+			if ( m_Menus[k]->HasNextMenu() )
+				sprintf(szMenuItemText,"%d. %s...\n", k,m_Menus[k]->GetCaption());
 			else
-				sprintf(szMenuItemText,"%d. %s\n",i,m_Menus[i]->GetCaption());
+				sprintf(szMenuItemText,"%d. %s\n", k,m_Menus[k]->GetCaption());
 
 			strcat(szMenuText,szMenuItemText);
 		}
