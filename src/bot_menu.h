@@ -148,6 +148,9 @@ public:
 		//if ( m_Menus[iMenuNum] )
 		//	delete m_Menus[iMenuNum];
 
+		if (m_Menus[iMenuNum]) {
+			delete m_Menus[iMenuNum];
+		}
 		m_Menus[iMenuNum] = new CBotMenuItem("Exit");
 	}
 
@@ -156,6 +159,9 @@ public:
 		//if ( m_Menus[iMenuNum] )
 		//	delete m_Menus[iMenuNum];
 
+		if (m_Menus[iMenuNum]) {
+			delete m_Menus[iMenuNum];
+		}
 		m_Menus[iMenuNum] = new CBotMenuItem(szMenuCaption,pNextMenu);
 	}
 
@@ -164,6 +170,9 @@ public:
 		//if ( m_Menus[iMenuNum] )
 		//	delete m_Menus[iMenuNum];
 
+		if (m_Menus[iMenuNum]) {
+			delete m_Menus[iMenuNum];
+		}
 		m_Menus[iMenuNum] = new CBotMenuItem(szMenuCaption,m_pMenuFunction);
 	}
 
@@ -187,7 +196,7 @@ private:
 	char *m_szCaption;
 };
 
-void SetupMenus ( void );
+void SetupMenus ( int waypointIdx );
 void BotMenu_Func_DeleteWaypoints ( CClient *pClient );
 void BotMenu_Func_Ladder_Waypoint       ( CClient *pClient );
 void BotMenu_Func_Squad_Form			( CClient *pClient );
