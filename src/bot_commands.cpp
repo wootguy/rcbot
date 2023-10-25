@@ -895,7 +895,7 @@ eBotCvarState CDebugCommand :: action ( CClient *pClient, const char *arg1, cons
 	else if (FStrEq(arg1, "wep"))
 		iDebugLevel = BOT_DEBUG_WEAPON_LEVEL;
 	
-	//iDebugLevel = BOT_DEBUG_THINK_LEVEL | BOT_DEBUG_NAV_LEVEL | BOT_DEBUG_SEE_LEVEL;
+	//iDebugLevel = BOT_DEBUG_THINK_LEVEL | BOT_DEBUG_NAV_LEVEL | BOT_DEBUG_SEE_LEVEL | BOT_DEBUG_HEAR_LEVEL | BOT_DEBUG_MOVE_LEVEL | BOT_DEBUG_AIM_LEVEL;
 
     if ( iDebugLevel )
     {
@@ -1684,10 +1684,12 @@ eBotCvarState BotFunc_AddBot ( CClient *pClient, const char *arg1, const char *a
 	{
 		iTeam = atoi(arg1);
 		
-		if (( iTeam <= 0 )||(iTeam > 5 ))
-			iTeam = 5;
-		
-		gBotGlobals.m_Bots[iBotIndex].m_Profile.m_iFavTeam = iTeam;
+		if (!gBotGlobals.IsMod(MOD_SVENCOOP)) {
+			if ((iTeam <= 0) || (iTeam > 5))
+				iTeam = 5;
+
+			gBotGlobals.m_Bots[iBotIndex].m_Profile.m_iFavTeam = iTeam;
+		}
 	}   
 	if ( arg2valid )
 	{
@@ -1816,6 +1818,11 @@ eBotCvarState BotFunc_AddBot ( CClient *pClient, const char *arg1, const char *a
 				if ( !iBotProfile )
 				{
 					// Assume invalid bot profile
+					continue;
+				}
+
+				if (arg1valid && gBotGlobals.IsMod(MOD_SVENCOOP) && iTeam != iBotProfile) {
+					// adding a specific profile
 					continue;
 				}
 				
