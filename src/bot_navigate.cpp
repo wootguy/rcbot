@@ -151,9 +151,8 @@ bool AStarNode::operator<(AStarNode *b)
 }
 
 
-int BotNavigate_AStarAlgo ( CBot *pBot, int iFrom, int iTo, BOOL bContinue )
+int BotNavigate_AStarAlgo ( CBot *pBot, int iFrom, int iTo, BOOL bContinue, bool testOnly)
 {
-
 	dataStack<int> sTempList;
 	//priority_queue<AStarNode*,vector<AStarNode*>,CompareAStarNode> *sOpenList;
 	AStarOpenList *sOpenList;
@@ -207,7 +206,7 @@ int BotNavigate_AStarAlgo ( CBot *pBot, int iFrom, int iTo, BOOL bContinue )
 		return -1;
 	}*/
 
-	if ( !bContinue )
+	if ( !bContinue || testOnly)
 	{
 //		int i;
 
@@ -284,7 +283,7 @@ int BotNavigate_AStarAlgo ( CBot *pBot, int iFrom, int iTo, BOOL bContinue )
 	int iPrevWpt = -1;	
 	BOOL bDetpackWpt;
 
-	while ( (bFoundGoal == FALSE) && !sOpenList->empty()/*IsEmpty()*/ && (iLoops < iMaxLoops) )
+	while ( (bFoundGoal == FALSE) && !sOpenList->empty()/*IsEmpty()*/ && ((iLoops < iMaxLoops) || testOnly))
 	{		
 
 		iLoops++;
@@ -304,7 +303,8 @@ int BotNavigate_AStarAlgo ( CBot *pBot, int iFrom, int iTo, BOOL bContinue )
 		if ( bFoundGoal )
 			break;
 
-		pBot->m_FailedGoals.Remove(iCurrentNode);
+		if (!testOnly)
+			pBot->m_FailedGoals.Remove(iCurrentNode);
 
 		pCurWpt = &waypoints[iCurrentNode];
 		vOrigin = WaypointOrigin(iCurrentNode);
@@ -336,7 +336,7 @@ int BotNavigate_AStarAlgo ( CBot *pBot, int iFrom, int iTo, BOOL bContinue )
 			// Remove returns TRUE if successfully removed (i.e. in list)
 			// this keeps the paths in until the bot has finished searching the whole
 			// path
-			if( pBot->m_stFailedPaths.Violate(pPath) )
+			if(!testOnly && pBot->m_stFailedPaths.Violate(pPath) )
 			{
 				// Forget this successor for now
 				continue;
@@ -564,6 +564,10 @@ int BotNavigate_AStarAlgo ( CBot *pBot, int iFrom, int iTo, BOOL bContinue )
         if ( bDeleteLoopPath ) 
             WaypointDeletePath(iCurrentNode,iCurrentNode);
 	
+	}
+
+	if (testOnly) {
+		return bFoundGoal ? 0 : -1;
 	}
 
 	// looped out! too many loops

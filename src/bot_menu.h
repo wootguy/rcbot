@@ -154,6 +154,17 @@ public:
 		m_Menus[iMenuNum] = new CBotMenuItem("Exit");
 	}
 
+	void AddExitMenuItem(const char* menuCaption, int iMenuNum)
+	{
+		//if ( m_Menus[iMenuNum] )
+		//	delete m_Menus[iMenuNum];
+
+		if (m_Menus[iMenuNum]) {
+			delete m_Menus[iMenuNum];
+		}
+		m_Menus[iMenuNum] = new CBotMenuItem(menuCaption);
+	}
+
 	void AddMenuItem ( int iMenuNum, const char *szMenuCaption, CBotMenu *pNextMenu )
 	{
 		//if ( m_Menus[iMenuNum] )
