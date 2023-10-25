@@ -1402,7 +1402,25 @@ BOOL BotNavigate_UpdateWaypoint ( CBot *pBot )
 	}
 	else if (iWptFlags & W_FL_PAIN)
 	{
-		if ((!paths[iCurrWpt] || !paths[iCurrWpt]->next) && pBot->IsAlive() && (pBot->pev->origin - vWptOrigin).Length() < 32) {
+		bool hasAnyPath = false;
+		PATH* p = paths[iCurrWpt];
+
+		while (p != NULL && !hasAnyPath)
+		{
+			int n = 0;
+
+			while (n < MAX_PATH_INDEX) {
+				if (p->index[n] != -1) {
+					hasAnyPath = true;
+					break;
+				}
+
+				n++;
+			}
+
+			p = p->next;  // go to next node in linked list
+		}
+		if (!hasAnyPath && pBot->IsAlive() && (pBot->pev->origin - vWptOrigin).Length() < 32) {
 			if (gBotGlobals.IsDebugLevelOn(BOT_DEBUG_THINK_LEVEL)) {
 				DebugMessage(BOT_DEBUG_THINK_LEVEL, gBotGlobals.m_pListenServerEdict, 0, "%s killed themselves after reaching a pain/death waypoint with no outward paths", pBot->m_szBotName);
 			}
