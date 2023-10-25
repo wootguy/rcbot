@@ -141,9 +141,11 @@ eBotCvarState CWaypointMenuCommand :: action ( CClient *pClient, const char *arg
     }
     
     //pEntity = pClient->GetPlayer();
-    
+
     pClient->m_iCurrentWaypoint = WaypointLocations.NearestWaypoint(EntityOrigin(pClient->GetPlayer()),50.0,-1,FALSE,TRUE);
     
+	SetupMenus(pClient->m_iCurrentWaypoint);
+
     if ( pClient->m_iCurrentWaypoint != -1 )
         gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_MAIN].Render(pClient);
     else

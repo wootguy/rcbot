@@ -152,7 +152,7 @@ extern "C" DLLEXPORT void GiveFnptrsToDll( enginefuncs_t* pengfuncsFromEngine, g
    else
    {
 	   // set-up menu's, some menus might depend on the MOD
-	   SetupMenus();
+	   SetupMenus(-1);
 
 	   BotMessage(NULL,0,"DLL Attaching To : %s",game_dll_filename);
 

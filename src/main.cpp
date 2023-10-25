@@ -1645,7 +1645,7 @@ void PluginInit() {
     gBotGlobals.Init();
     gBotGlobals.GetModInfo();
 
-    SetupMenus();
+    SetupMenus(-1);
 
     //gBotGlobals.GameInit();
 
