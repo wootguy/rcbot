@@ -44,7 +44,8 @@ extern CBotGlobals gBotGlobals;
 extern WAYPOINTS waypoints;
 
 // colored menu items
-#define ICOLOR(name, flag) ((waypointIdx != -1 && waypoints[waypointIdx].flags & flag) ? ("\\y" ##name "\\w") : ##name)
+#define ICOLOR(name, flag) ((waypointIdx != -1 && (waypoints[waypointIdx].flags & flag)) ? ("\\y" ##name "\\w") : ##name)
+
 
 /*
   Setup Menus
@@ -71,7 +72,102 @@ void SetupMenus (int waypointIdx)
 	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_MAIN].AddMenuItem(3,"Edit Paths",&gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_EDIT_PATHS]);
 	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_MAIN].AddMenuItem(4,"Clear Waypoints",&gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_CONFIRM_DELETE]);
 
-	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_MAIN].AddExitMenuItem(5);
+	if (waypointIdx == -1) {
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_MAIN].AddExitMenuItem(5);
+	}
+	else {
+		// print some info about the selected waypoint
+		std::string flagStr;
+		int f = waypoints[waypointIdx].flags;
+
+		flagStr += (f & W_FL_JUMP) ? "Jump, " : "";
+		flagStr += (f & W_FL_CROUCHJUMP) ? "CrouchJump, " : "";
+		flagStr += (f & W_FL_CROUCH) ? "Crouch, " : "";
+		flagStr += (f & W_FL_LADDER) ? "Ladder, " : "";
+		flagStr += (f & W_FL_STAY_NEAR) ? "StayCloseTo, " : "";
+		flagStr += (f & W_FL_TELEPORT) ? "Teleport, " : "";
+		flagStr += (f & W_FL_FLY) ? "Grapple, " : "";
+		flagStr += (f & W_FL_ENDLEVEL) ? "Objective, " : "";
+		flagStr += (f & W_FL_OPENS_LATER) ? "OpensLater, " : "";
+		flagStr += (f & W_FL_HUMAN_TOWER) ? "HumanTower, " : "";
+		flagStr += (f & W_FL_UNREACHABLE) ? "Unreachable, " : "";
+		flagStr += (f & W_FL_DOOR) ? "Door, " : "";
+		flagStr += (f & W_FL_HEALTH) ? "Health, " : "";
+		flagStr += (f & W_FL_ARMOR) ? "Armor, " : "";
+		flagStr += (f & W_FL_AMMO) ? "Ammo, " : "";
+		flagStr += (f & W_FL_CHECK_LIFT) ? "CheckLift, " : "";
+		flagStr += (f & W_FL_WAIT_FOR_LIFT) ? "Waitlift, " : "";
+		flagStr += (f & W_FL_LIFT) ? "LiftBtn, " : "";
+		flagStr += (f & W_FL_SCIENTIST_POINT) ? "SciPoint, " : "";
+		flagStr += (f & W_FL_BARNEY_POINT) ? "BarneyPoint, " : "";
+		flagStr += (f & W_FL_DEFEND_ZONE) ? "DefZone, " : "";
+		flagStr += (f & W_FL_AIMING) ? "Aiming, " : "";
+		flagStr += (f & W_FL_PAIN) ? "Pain, " : "";
+		flagStr += (f & W_FL_WEAPON) ? "Weapon, " : "";
+		flagStr += (f & W_FL_TANK) ? "Tank, " : "";
+		flagStr += (f & W_FL_PUSHABLE) ? "Pushable, " : "";
+		flagStr += (f & W_FL_GREN_THROW) ? "NadeThrow, " : "";
+
+		if (f == 0) {
+			flagStr = "(none)";
+		}
+		else {
+			flagStr = flagStr.substr(0, flagStr.length() - 2);
+		}
+		
+		int numReachable = 0;
+		int numBots = 0;
+		CClient* pClient = NULL;
+		edict_t* pPlayer = NULL;
+		for (int iIndex = 0; iIndex < MAX_PLAYERS; iIndex++)
+		{
+			// do some bot checking ( just do ONE loop... jeez)
+			CBot* pBot = &gBotGlobals.m_Bots[iIndex];
+
+			if (!pBot->IsUsed())
+				continue;
+
+			// check for unused clients
+			if ((pClient = gBotGlobals.m_Clients.GetClientByIndex(iIndex)) == NULL)
+				continue;
+
+			if (!pClient->IsUsed())
+				continue;
+
+			if ((pPlayer = pClient->GetPlayer()) == NULL)
+				continue;
+
+			if (!*STRING(pPlayer->v.netname))
+				continue;
+
+			if (pBot->m_iCurrentWaypointIndex == -1) {
+				continue;
+			}
+
+			numBots++;
+			while (1) {
+				int ret = BotNavigate_AStarAlgo(pBot, pBot->m_iCurrentWaypointIndex, waypointIdx, false, true);
+				
+				if (ret == -2) {
+					continue; // need to continue finding a path
+				}
+				else if (ret == -1) {
+					break;
+				}
+
+				numReachable++;
+				break;
+			}
+		}
+
+		string reachabilityStr = numBots > 0 ? UTIL_VarArgs("%d bots", numReachable) : "0 bots (none are near a waypoint)";
+		const char* captionStr =
+			UTIL_VarArgs("Exit\n\nWaypoint info:\nFlags: %s\nReachable to %s",
+				flagStr.c_str(), reachabilityStr.c_str());
+
+		gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_MAIN].AddExitMenuItem(captionStr, 5);
+	}
+	
 
 	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_CONFIRM_DELETE] = CBotMenu("Clear All Waypoints?");
 	gBotGlobals.m_Menus[BOT_MENU_WAYPOINT_CONFIRM_DELETE].AddMenuItem(1,"Yes",BotMenu_Func_DeleteWaypoints);
@@ -368,7 +464,7 @@ void CBotMenu :: Render ( CClient *pClient )
 	int iSlots;
 	int i;
 	char szMenuText[512];
-	char szMenuItemText[64];
+	char szMenuItemText[512];
 	
 	if ( pClient == NULL )
 		return;

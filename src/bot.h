@@ -6757,7 +6757,7 @@ void BotFunc_KickBotFromTeam ( int iTeam );
 	BOOL BotFunc_BreakableIsEnemy ( edict_t *pBreakable, edict_t *pEdict );
 	///////////////////////////////////////////////////////
 	// NAVIGATION
-	int BotNavigate_AStarAlgo ( CBot *pBot, int iFrom, int iTo, BOOL bContinue );
+	int BotNavigate_AStarAlgo ( CBot *pBot, int iFrom, int iTo, BOOL bContinue, bool testOnly=false );
 	int BotNavigate_FindNextWaypoint ( CBot *pBot );
 	BOOL BotNavigate_UpdateWaypoint ( CBot *pBot );
 	PATH *BotNavigate_FindPathFromTo ( int iFrom, int iTo, int iTeam );
