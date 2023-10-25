@@ -376,7 +376,10 @@ void InitMessage ( const char *message );
 
 		/////////////////////////////////////////////////////////////////
 		// GET ALL INFO NEEDED...
-		m_fWaypointDisplayTime = gpGlobals->time + 0.1;
+		
+		// add some extra time so that beams don't render again until the previous beams disappear,
+		// otherwise other waypoints/paths won't be drawn at all when there are lots in the same area.
+		m_fWaypointDisplayTime = gpGlobals->time + 0.1 + 0.01667f;
 		
 		pPlayer = GetPlayer();
 
