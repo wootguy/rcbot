@@ -6475,13 +6475,18 @@ BOOL CBot :: UpdateVisibles ( void )
 			}
 		}
 
-		// quick visible checking
-		pvs = ENGINE_SET_PVS ( (float *)&vOrigin );
+		CBaseEntity* baseEnt = (CBaseEntity*)GET_PRIVATE(pEntity);
+		bool isUsable = baseEnt && (baseEnt->ObjectCaps() & (FCAP_IMPULSE_USE | FCAP_CONTINUOUS_USE | FCAP_ONOFF_USE));
 
-		if( !ENGINE_CHECK_VISIBILITY(m_pEdict,pvs) )
-		{
-			m_pVisibles->setVisible(i,FALSE);
-			continue;
+		// quick visible checking (usable objects can be used through walls)
+		if (!isUsable) {
+			pvs = ENGINE_SET_PVS((float*)&vOrigin);
+
+			if (!ENGINE_CHECK_VISIBILITY(m_pEdict, pvs))
+			{
+				m_pVisibles->setVisible(i, FALSE);
+				continue;
+			}
 		}
 
 		// Use the bots vision to advantage
@@ -7295,6 +7300,20 @@ BOOL CBot :: FVisible ( edict_t *pEntity )
 			{
 				// condition...
 				RemoveCondition(BOT_CONDITION_SEE_ENEMY_BODY);
+			}
+
+			CBaseEntity* baseEnt = (CBaseEntity*)GET_PRIVATE(pEntity);
+			if (baseEnt && (baseEnt->ObjectCaps() & (FCAP_IMPULSE_USE | FCAP_CONTINUOUS_USE | FCAP_ONOFF_USE))) {
+				float usableRange = 32; // a guess, can maybe be higher
+				Vector expand = Vector(usableRange, usableRange, usableRange);
+				Vector min = pEntity->v.absmin - expand;
+				Vector max = pEntity->v.absmax + expand;
+
+				if (tr.vecEndPos >= min && tr.vecEndPos <= max) {
+					// Usable objects do not need to be visible to be used. The player just needs
+					// to be close enough and facing the entity.
+					return TRUE;
+				}
 			}
 
 			// find out if we can see its head then
