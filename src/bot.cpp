@@ -1262,9 +1262,9 @@ void CBot :: Init ( void )
 	m_fNextCheckFeignTime = 0;
 	m_bUsedMelee = 0;
 	m_iBoredom = 0; // neg
-	CBotGAValues* m_GASurvival = 0;
-	float m_fLowestEnemyCost = 0;
-	Vector m_vLowestEnemyCostVec = Vector(0,0,0);
+	m_GASurvival = 0;
+	m_fLowestEnemyCost = 0;
+	m_vLowestEnemyCostVec = Vector(0,0,0);
 	for (int i = 0; i < BOT_COST_BUCKETS; i++) {
 		memset(fRangeCosts[i], 0, sizeof(float) * BOT_COST_BUCKETS);
 	}
