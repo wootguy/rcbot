@@ -1076,7 +1076,7 @@ void CBotGlobals :: KeyValue ( edict_t *pentKeyvalue, KeyValueData *pkvd )
 	// that use this master are open or not (and find buttons etc to open it)
 	if ( FStrEq(pkvd->szKeyName,"master") )
 	{
-		m_Masters.AddMaster(pentKeyvalue,pkvd->szValue);
+		m_Masters.AddMaster(pentKeyvalue, (char*)pkvd->szValue);
 	}
 /*
 	if ( IsMod(MOD_TS) )

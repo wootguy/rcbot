@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.6)
 
+option(HLCOOP_BUILD "Use the hl co-op headers rather than the hlsdk + sven headers" ON)
+
 project(rcbot)
 
 set(SOURCE_FILES
