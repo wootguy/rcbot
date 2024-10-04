@@ -1077,7 +1077,7 @@ void StartFrame(void)
 // engine hooks
 //
 
-void pfnChangeLevel(char* s1, char* s2)
+void pfnChangeLevel(const char* s1, const char* s2)
 {
 	if (debug_engine) { fp = fopen("bot.txt", "a"); fprintf(fp, "pfnChangeLevel:\n"); fclose(fp); }
 
@@ -1542,7 +1542,7 @@ void pfnSetClientMaxspeed(const edict_t* pEdict, float fNewMaxspeed)
 #endif
 }
 
-void pfnSetClientKeyValue(int clientIndex, char* infobuffer, char* key, char* value)
+void pfnSetClientKeyValue(int clientIndex, char* infobuffer, const char* key, char* value)
 {
 	edict_t* pEdict = INDEXENT(clientIndex);
 
@@ -1616,7 +1616,7 @@ void pfnSetClientKeyValue(int clientIndex, char* infobuffer, char* key, char* va
 #endif
 }
 
-const char* pfnGetPlayerAuthId(edict_t* e)
+const char* pfnGetPlayerAuthId(const edict_t* e)
 {
 	// TODO: not needed for sven, but for other games? -w00t
 	static const char* BOT_STEAM_ID = "BOT";

@@ -337,6 +337,7 @@ int Ceiling ( float fVal )
 	return loVal+1;
 }
 
+#ifndef HLCOOP_BUILD
 Vector UTIL_VecToAngles( const Vector &vec )
 {
    float rgflVecOut[3];
@@ -359,6 +360,24 @@ void UTIL_MakeVectors( const Vector &vecAngles )
 {
    MAKE_VECTORS( vecAngles );
 }
+
+int UTIL_PointContents(const Vector& vec)
+{
+	return POINT_CONTENTS(vec);
+}
+
+
+void UTIL_SetSize(entvars_t* pev, const Vector& vecMin, const Vector& vecMax)
+{
+	SET_SIZE(ENT(pev), vecMin, vecMax);
+}
+
+
+void UTIL_SetOrigin(entvars_t* pev, const Vector& vecOrigin)
+{
+	SET_ORIGIN(ENT(pev), vecOrigin);
+}
+#endif
 
 void strlow(char *str)
 // lower a string to make it lower case.
@@ -501,24 +520,6 @@ edict_t *UTIL_FindEntityByTargetname( edict_t *pentStart, const char *szName )
 edict_t *UTIL_FindEntityByClassname( edict_t *pentStart, const char *szName )
 {
    return UTIL_FindEntityByString( pentStart, "classname", szName );
-}
-
-
-int UTIL_PointContents( const Vector &vec )
-{
-   return POINT_CONTENTS(vec);
-}
-
-
-void UTIL_SetSize( entvars_t *pev, const Vector &vecMin, const Vector &vecMax )
-{
-   SET_SIZE( ENT(pev), vecMin, vecMax );
-}
-
-
-void UTIL_SetOrigin( entvars_t *pev, const Vector &vecOrigin )
-{
-   SET_ORIGIN(ENT(pev), vecOrigin );
 }
 
 void UTIL_SayText( const char *pText, edict_t *pEdict )

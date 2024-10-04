@@ -9950,7 +9950,11 @@ BOOL CBot :: IsEnemy ( edict_t *pEntity )
 						(vSize.y > 24) ||
 						(vSize.z > 36);
 
+#ifdef HLCOOP_BUILD
+					int irel = baseplr->IRelationship(basebreak);
+#else
 					int irel = baseplr->IRelationship(basebreak, true);
+#endif
 					bool isEnemy = irel != R_AL;
 
 					if ( (hasTarget || isBigEnough) && isEnemy) {
