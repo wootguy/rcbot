@@ -44,7 +44,7 @@ extern CBotGlobals gBotGlobals;
 extern WAYPOINTS waypoints;
 
 // colored menu items
-#define ICOLOR(name, flag) ((waypointIdx != -1 && (waypoints[waypointIdx].flags & flag)) ? ("\\y" ##name "\\w") : ##name)
+#define ICOLOR(name, flag) ((waypointIdx != -1 && (waypoints[waypointIdx].flags & flag)) ? ("\\y" name "\\w") : name)
 
 
 /*
