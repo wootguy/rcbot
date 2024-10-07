@@ -6185,7 +6185,11 @@ public:
 		m_Mods.AddMod("rc2","rc2",MOD_RC2);
 		m_Mods.AddMod("RockCrowbar","rc",MOD_RC);
 		m_Mods.AddMod("SvenCoop","hl",MOD_SVENCOOP);
-		m_Mods.AddMod("valve","hl",MOD_HL_DM);
+#ifdef HLCOOP_BUILD
+		m_Mods.AddMod("valve", "hl", MOD_SVENCOOP);
+#else
+		m_Mods.AddMod("valve", "hl", MOD_HL_DM);
+#endif
 		m_Mods.AddMod("hlrally","hlr",MOD_HL_RALLY);
 		m_Mods.AddMod("cstrike","mp",MOD_COUNTERSTRIKE);
 		m_Mods.AddMod("tfc","tfc",MOD_TFC);
