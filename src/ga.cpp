@@ -29,7 +29,12 @@
  *
  */
 
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#endif
+
 #include "bot.h"
 
 #include "ga.h"
@@ -108,7 +113,7 @@ void CPopulation :: save ( FILE *bfp )
 
 	fwrite(&iSize,sizeof(int),1,bfp);
 
-	for ( int i = 0; i < iSize; i ++ )
+	for ( int i = 0; i < (int)iSize; i ++ )
 		m_theIndividuals[i]->save(bfp);
 }
 
@@ -135,7 +140,7 @@ void CPopulation :: load ( FILE *bfp, int chromosize, int type )
 
 	m_theIndividuals.clear();
 
-	for ( int i = 0; i < iSize; i ++ )
+	for ( int i = 0; i < (int)iSize; i ++ )
 	{
 		// reliability check
 		if ( feof(bfp) )
@@ -202,7 +207,7 @@ void CGA :: addToPopulation ( IIndividual *individual )
 {
 	m_thePopulation.add(individual);
 
-	if ( m_thePopulation.size() >= m_iMaxPopSize )
+	if ((int)m_thePopulation.size() >= m_iMaxPopSize )
 	{
 		epoch();
 
@@ -293,7 +298,7 @@ void CGA :: epoch ()
 {
 	m_theNewPopulation.freeMemory();
 
-	while ( m_theNewPopulation.size() < m_iMaxPopSize )
+	while ((int)m_theNewPopulation.size() < m_iMaxPopSize )
 	{
 		IIndividual *mum = m_theSelectFunction->select(&m_thePopulation);
 		IIndividual *dad = m_theSelectFunction->select(&m_thePopulation);

@@ -18,7 +18,12 @@
  *  Oct 2023 - Modified by wootguy
  */
 
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#endif
+
 #include "megahal.h"
 #include <stdio.h>
 #include <stdarg.h>
@@ -68,8 +73,6 @@ void MegaHal::load_personality(const char* path)
 }
 
 void MegaHal::load_personality_thread(const char* path) {
-    FILE* file;
-
     while (g_load_threads.getValue() > 0) {
         this_thread::sleep_for(std::chrono::milliseconds(100));
     }
@@ -1177,7 +1180,7 @@ char* MegaHal::generate_reply(HAL_MODEL *model, HAL_DICTIONARY *words)
 	    surprise=evaluate_reply(model, keywords, replywords);
 
         int length = 1;
-        for (int k = 0; k < replywords->size; ++k)
+        for (int k = 0; k < (int)replywords->size; ++k)
             length += replywords->entry[k].length;
 
         if (length >= HAL_MAX_REPLY_LEN) {
@@ -1643,9 +1646,9 @@ void MegaHal::add_swap(HAL_SWAP *list, char *s, char *d)
 	return;
     }
 
-    list->from[list->size-1].length=strlen(s);
+    list->from[list->size-1].length= (uint8_t)strlen(s);
     list->from[list->size-1].word=strdup(s);
-    list->to[list->size-1].length=strlen(d);
+    list->to[list->size-1].length= (uint8_t)strlen(d);
     list->to[list->size-1].word=strdup(d);
 }
 
@@ -1718,7 +1721,7 @@ HAL_DICTIONARY* MegaHal::initialize_list(const char *filename)
 	    string=strtok(buffer, "\t \n#");
 
 	    if((string!=NULL) && (strlen(string)>0)) {
-	        word.length=strlen(string);
+	        word.length= (uint8_t)strlen(string);
 	        word.word=strdup(buffer);
             add_word(list, word);
             free(word.word);
@@ -1741,7 +1744,7 @@ void MegaHal::free_words(HAL_DICTIONARY *words)
         return;
 
     if(words->entry != NULL)
-	    for(int i = 0; i < words->size; ++i)
+	    for(int i = 0; i < (int)words->size; ++i)
             free_word(words->entry[i]);
 }
 

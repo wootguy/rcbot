@@ -43,7 +43,11 @@
 //
 // engine functions from half-life
 //
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#endif
 
 #include "bot.h"
 #include "bot_client.h"
@@ -51,10 +55,15 @@
 #include "waypoint.h"
 
 #ifdef RCBOT_META_BUILD
+#ifndef HLCOOP_BUILD
 extern globalvars_t  *gpGlobals;
 #endif
+#endif
 
+#ifndef HLCOOP_BUILD
 extern enginefuncs_t g_engfuncs;
+#endif
+
 extern CBotGlobals gBotGlobals;
 extern int debug_engine;
 extern CWaypointLocations WaypointLocations;

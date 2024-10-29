@@ -129,7 +129,9 @@ Vector UTIL_GetGroundVector ( edict_t *pEdict );
 BOOL UTIL_EntityIsHive ( edict_t *pEdict );
 int UTIL_CountEntitiesInRange ( char *classname, Vector vOrigin, float fRange );
 int UTIL_SentryLevel ( edict_t *pEntity );
+#ifndef HLCOOP_BUILD
 void RadiusDamage( Vector vecSrc, entvars_t *pevInflictor, entvars_t *pevAttacker, float flDamage, float flRadius, int iClassIgnore, int bitsDamageType );
+#endif
 void UTIL_BotScreenShake( const Vector &center, float amplitude, float frequency, float duration, float radius );
 edict_t *UTIL_GetPlayerByPlayerId ( int id );
 Vector UTIL_FurthestVectorAroundYaw ( CBot *pBot );
@@ -271,7 +273,9 @@ edict_t *UTIL_CheckTeleExit ( Vector vOrigin, edict_t *pOwner, edict_t *pEntranc
     void UTIL_CountBuildingsInRange ( Vector vOrigin, float fRange, int *iDefs, int *iOffs, int *iSens, int *iMovs );
 	float BotFunc_DistanceBetweenEdicts ( edict_t *pEdict1, edict_t *pEdict2 );
 
+#ifndef HLCOOP_BUILD
 	float UTIL_AngleDiff( float destAngle, float srcAngle );
+#endif
 
 	void BotPrintTalkMessage (char *fmt, ...);
 
@@ -2037,7 +2041,7 @@ private:
 
 #define SQUAD_DEFAULT_SPREAD 50.0// say 50 units between each member...?
 
-typedef enum eSquadForm
+enum eSquadForm
 {
 	SQUAD_FORM_NONE = 0,
 	SQUAD_FORM_WEDGE,
@@ -2048,7 +2052,7 @@ typedef enum eSquadForm
 	SQUAD_FORM_VEE
 };
 
-typedef enum eCombatType
+enum eCombatType
 {
 	COMBAT_NONE = 0,
 	COMBAT_STEALTH,
@@ -6703,6 +6707,7 @@ const char *BotFunc_GetRandomPlayerName ( CBot *pBot, int iState );
 // ENGINE FUNCTIONS
 
 void GameDLLInit( void );
+#ifndef HLCOOP_BUILD
 int DispatchSpawn( edict_t *pent );
 void DispatchThink( edict_t *pent );
 void DispatchUse( edict_t *pentUsed, edict_t *pentOther );
@@ -6752,6 +6757,7 @@ int GetHullBounds( int hullnumber, float *mins, float *maxs );
 void CreateInstancedBaselines( void );
 int InconsistentFile( const edict_t *player, const char *filename, char *disconnect_message );
 int AllowLagCompensation( void );
+#endif
 void RCBot_ServerCommand ( void );
 int GetModId ( void );
 void GetGameDirectory ( char *szDir );

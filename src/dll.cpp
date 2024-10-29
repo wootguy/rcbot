@@ -43,7 +43,11 @@
 //
 // engine + initializing functions + bot interface
 //
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#endif
 
 #include "entity_state.h"
 

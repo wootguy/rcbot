@@ -63,7 +63,12 @@
 // bot_chat.cpp
 //
 
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#include <unordered_map>
+#endif
 
 #include "bot_const.h"
 #include "bot.h"
@@ -84,7 +89,7 @@ char *name_in_msg = "%n";
 #endif
 
 // maps a profile ID to a brain
-map<int, MegaHal*> g_megahal_brains;
+unordered_map<int, MegaHal*> g_megahal_brains;
 
 MegaHal* getBotBrain(bot_profile_t* pBotProfile) {
 	int profileid = pBotProfile->m_iProfileId;

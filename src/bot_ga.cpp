@@ -31,7 +31,12 @@
 
 #include "extdll.h"
 
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#endif
+
 #include "bot_const.h"
 #include "bot.h"
 #include "bot_ga.h"
@@ -175,7 +180,7 @@ void CBotGAValues :: save (FILE *bfp)
 
 	fwrite(&iSize,sizeof(unsigned int),1,bfp);
 
-	for ( int i = 0; i < iSize; i ++ )
+	for ( int i = 0; i < (int)iSize; i ++ )
 	{
 		fwrite(&(m_theValues[i]),sizeof(ga_value),1,bfp);
 	}
@@ -203,7 +208,7 @@ void CBotGAValues :: load (FILE *bfp,int req_size)
 
 	fread(&iSize,sizeof(unsigned int),1,bfp);
 
-	for ( int i = 0; i < iSize; i ++ )
+	for ( int i = 0; i < (int)iSize; i ++ )
 	{
 		// reliability check
 		if ( feof(bfp) )

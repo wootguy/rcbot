@@ -28,7 +28,11 @@
  *    version.
  *
  */
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#endif
 
 #include "bot.h"
 #include "perceptron.h"
@@ -91,7 +95,7 @@ void CPerceptron :: setWeights ( vector <ga_value> weights, int iFrom, int iNum 
 
 void CPerceptron :: randomize ()
 {
-	for ( int i = 0; i < m_weights.size(); i ++ )
+	for ( int i = 0; i < (int)m_weights.size(); i ++ )
 		m_weights[i] = RANDOM_FLOAT(0,0.6)-0.3;
 }
 

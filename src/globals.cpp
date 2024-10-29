@@ -44,7 +44,11 @@
 // Global class holding info required throughout program
 //
 
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#endif
 
 #include "bot_const.h"
 #include "bot.h"
@@ -148,7 +152,7 @@ BOOL CBotGlobals :: NetMessageStarted ( int msg_dest, int msg_type, const float 
 		
 		index = -1;
 		
-		if (debug_engine) { fp=fopen("bot.txt","a"); fprintf(fp,"pfnMessageBegin: edict=%x dest=%d type=%d\n",ed,msg_dest,msg_type); fclose(fp); }
+		if (debug_engine) { fp=fopen("bot.txt","a"); fprintf(fp,"pfnMessageBegin: edict=%x dest=%d type=%d\n",(unsigned int)ed,msg_dest,msg_type); fclose(fp); }
 		
 		m_CurrentMessage = NULL;
 		m_iCurrentMessageState = 0;

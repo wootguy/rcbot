@@ -54,7 +54,11 @@
 #include <sys/stat.h>
 #endif
 
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#endif
 
 #include "bot.h"
 #include "waypoint.h"
