@@ -33,7 +33,11 @@
 //
 // from botman's HPB_Bot
 //
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#endif
 
 #include "dir.h"
 

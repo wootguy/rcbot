@@ -30,7 +30,12 @@
  */
 #pragma once
 
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#endif
+
 #include "megahal.h"
 
 // bot HAL Markov model order

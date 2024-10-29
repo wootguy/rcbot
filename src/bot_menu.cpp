@@ -30,7 +30,11 @@
  */
 #include "extdll.h"
 
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#endif
 
 #include "bot_const.h"
 #include "bot.h"

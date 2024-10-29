@@ -47,7 +47,11 @@
 #include "extdll.h"
 #include "enginecallback.h"
 
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#endif
 
 #include "generic_class.h"
 #include "bot.h"

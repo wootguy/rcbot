@@ -1,1 +1,1 @@
-call mmlib\msvc.bat
+call mmlib\msvc.bat -DHLCOOP_BUILD=OFF

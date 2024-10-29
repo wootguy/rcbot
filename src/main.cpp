@@ -1,4 +1,9 @@
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#endif
+
 #include "bot_const.h"
 #include "bot.h"
 #include "waypoint.h"
@@ -8,39 +13,74 @@ using namespace std;
 #pragma comment(linker, "/EXPORT:GiveFnptrsToDll=_GiveFnptrsToDll@8")
 #pragma comment(linker, "/SECTION:.data,RW")
 
-extern cvar_t bot_ver_cvar;
-
 int debug_engine;
 char* g_argv;
 static FILE* fp;
 
 extern CBotGlobals gBotGlobals;
 
-plugin_info_t Plugin_info = {
-    META_INTERFACE_VERSION,	// ifvers
-    BOT_NAME,	// name
-    BOT_VER,	// version
-    __DATE__,	// date
-    BOT_AUTHOR,	// author
-    BOT_WEBSITE,	// url
-    BOT_DBG_MSG_TAG,	// logtag, all caps please
-    PT_STARTUP,	// (when) loadable
-    PT_NEVER,	// (when) unloadable
-};
-
 extern int debug_engine;
 extern char* g_argv;
 
+#ifndef HLCOOP_BUILD
 DLL_GLOBAL const Vector g_vecZero = Vector(0, 0, 0);
+#endif
 
 CBotGlobals gBotGlobals;
 
 extern CWaypointVisibilityTable WaypointVisibility;
 extern CWaypointLocations WaypointLocations;
 
-cvar_t bot_ver_cvar = { BOT_VER_CVAR,BOT_VER,FCVAR_SERVER };
+#ifdef HLCOOP_BUILD
+#define HOOK_RET_INT HOOK_RETURN_DATA
+#define HOOK_RET_STR HOOK_RETURN_DATA
+#define HOOK_RET_VOID HOOK_RETURN_DATA
+#else
+#define HOOK_RET_INT int
+#define HOOK_RET_STR const char*
+#define HOOK_RET_VOID void
 
-int pfnCmd_Argc(void)
+#define DispatchSpawnRcbot DispatchSpawn
+#define DispatchTouchRcbot DispatchTouch
+#define DispatchBlockedRcbot DispatchBlocked
+#define DispatchKeyValueRcbot DispatchKeyValue
+#define ClientConnectRcbot ClientConnect
+#define ClientDisconnectRcbot ClientDisconnect
+#define ClientPutInServerRcbot ClientPutInServer
+#define ClientCommandRcbot ClientCommand
+#define ServerActivateRcbot ServerActivate
+#define ServerDeactivateRcbot ServerDeactivate
+#define StartFrameRcbot StartFrame
+#endif
+
+int pfnCmd_Argc() {
+	if (gBotGlobals.m_bIsFakeClientCommand) {
+		return gBotGlobals.m_iFakeArgCount;
+	}
+
+	return 0;
+}
+
+const char* pfnCmd_Argv(int argc)
+{
+	// this function returns a pointer to a certain argument of the current client command. Since 
+	// bots have no client DLL and we may want a bot to execute a client command, we had to 
+	// implement a g_argv string in the bot DLL for holding the bots' commands, and also keep 
+	// track of the argument count. Hence this hook not to let the engine ask an unexistent client 
+	// DLL for a command we are holding here. Of course, real clients commands are still retrieved 
+	// the normal way, by asking the engine.
+
+	extern char* g_argv;
+
+	if (gBotGlobals.m_bIsFakeClientCommand)
+	{
+		return GetArg(g_argv, argc);
+	}
+
+	return NULL;
+}
+
+HOOK_RET_INT pfnCmd_Argc_hook(void)
 {
 	// this function returns the number of arguments the current client command string has. Since 
 	// bots have no client DLL and we may want a bot to execute a client command, we had to 
@@ -48,7 +88,13 @@ int pfnCmd_Argc(void)
 	// track of the argument count. Hence this hook not to let the engine ask an unexistent client 
 	// DLL for a command we are holding here. Of course, real clients commands are still retrieved 
 	// the normal way, by asking the engine. 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	if (gBotGlobals.m_bIsFakeClientCommand) {
+		return HOOK_HANDLED_OVERRIDE(gBotGlobals.m_iFakeArgCount);
+	}
+
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	if (gBotGlobals.m_bIsFakeClientCommand) {
 		RETURN_META_VALUE(MRES_SUPERCEDE, gBotGlobals.m_iFakeArgCount);
 	}
@@ -64,7 +110,7 @@ int pfnCmd_Argc(void)
 
 }
 
-const char* pfnCmd_Args(void)
+HOOK_RET_STR pfnCmd_Args(void)
 {
 	// this function returns a pointer to the whole current client command string. Since bots 
 	// have no client DLL and we may want a bot to execute a client command, we had to implement 
@@ -78,27 +124,36 @@ const char* pfnCmd_Args(void)
 	// is this a bot issuing that client command ? 
 	if (gBotGlobals.m_bIsFakeClientCommand)
 	{
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
 		// is it a "say" or "say_team" client command ? 
 		if (strncmp("say ", g_argv, 4) == 0) {
-			RETURN_META_VALUE(MRES_SUPERCEDE, &g_argv[0] + 4); // skip the "say" bot client command (bug in HL engine) 
+			return HOOK_HANDLED_OVERRIDE(&g_argv[0] + 4); // skip the "say" bot client command (bug in HL engine) 
 		}
 		else if (strncmp("say_team ", g_argv, 9) == 0) {
-			RETURN_META_VALUE(MRES_SUPERCEDE, &g_argv[0] + 9); // skip the "say_team" bot client command (bug in HL engine) 
+			return HOOK_HANDLED_OVERRIDE(&g_argv[0] + 9); // skip the "say_team" bot client command (bug in HL engine) 
 		}
-		RETURN_META_VALUE(MRES_SUPERCEDE, &g_argv[0]); // else return the whole bot client command string we know 
+		return HOOK_HANDLED_OVERRIDE(&g_argv[0]); // else return the whole bot client command string we know
+#elif defined(RCBOT_META_BUILD)
+		if (strncmp("say ", g_argv, 4) == 0) {
+			RETURN_META_VALUE(MRES_SUPERCEDE, &g_argv[0] + 4);
+		}
+		else if (strncmp("say_team ", g_argv, 9) == 0) {
+			RETURN_META_VALUE(MRES_SUPERCEDE, &g_argv[0] + 9);
+		}
+		RETURN_META_VALUE(MRES_SUPERCEDE, &g_argv[0]);
 #else
-		// is it a "say" or "say_team" client command ? 
 		if (strncmp("say ", g_argv, 4) == 0)
-			return (&g_argv[0] + 4); // skip the "say" bot client command (bug in HL engine) 
+			return (&g_argv[0] + 4);
 		else if (strncmp("say_team ", g_argv, 9) == 0)
-			return (&g_argv[0] + 9); // skip the "say_team" bot client command (bug in HL engine) 
+			return (&g_argv[0] + 9);
 
-		return (&g_argv[0]); // else return the whole bot client command string we know 
+		return (&g_argv[0]);
 #endif
 	}
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META_VALUE(MRES_IGNORED, NULL);
 #else
 	return ((*g_engfuncs.pfnCmd_Args) ()); // ask the client command string to the engine 
@@ -106,7 +161,7 @@ const char* pfnCmd_Args(void)
 
 }
 
-const char* pfnCmd_Argv(int argc)
+HOOK_RET_STR pfnCmd_Argv_hook(int argc)
 {
 	// this function returns a pointer to a certain argument of the current client command. Since 
 	// bots have no client DLL and we may want a bot to execute a client command, we had to 
@@ -117,8 +172,16 @@ const char* pfnCmd_Argv(int argc)
 
 	extern char* g_argv;
 
-
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	if (gBotGlobals.m_bIsFakeClientCommand)
+	{
+		return HOOK_HANDLED_OVERRIDE(GetArg(g_argv, argc));
+	}
+	else
+	{
+		return HOOK_CONTINUE;
+	}
+#elif defined(RCBOT_META_BUILD)
 	if (gBotGlobals.m_bIsFakeClientCommand)
 	{
 		RETURN_META_VALUE(MRES_SUPERCEDE, GetArg(g_argv, argc));
@@ -199,8 +262,7 @@ const char* GetArg(const char* command, int arg_number)
 	return (&arg[argidx][0]); // returns the wanted argument 
 }
 
-
-int DispatchSpawn(edict_t* pent)
+HOOK_RET_INT DispatchSpawnRcbot(edict_t* pent)
 {
 	if (gpGlobals->deathmatch)
 	{
@@ -211,7 +273,7 @@ int DispatchSpawn(edict_t* pent)
 			FILE* fp;
 
 			fp = fopen("bot.txt", "a");
-			fprintf(fp, "DispatchSpawn: %x %s\n", pent, pClassname);
+			fprintf(fp, "DispatchSpawn: %x %s\n", (unsigned int)pent, pClassname);
 			if (pent->v.model != 0)
 				fprintf(fp, " model=%s\n", STRING(pent->v.model));
 			fclose(fp);
@@ -252,14 +314,16 @@ int DispatchSpawn(edict_t* pent)
 		}
 	}
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META_VALUE(MRES_IGNORED, 0);
 #else
 	return (*other_gFunctionTable.pfnSpawn)(pent);
 #endif
 }
 
-void DispatchTouch(edict_t* pentTouched, edict_t* pentOther)
+HOOK_RET_VOID DispatchTouchRcbot(edict_t* pentTouched, edict_t* pentOther)
 {
 	static CBot* pBot;
 
@@ -272,7 +336,9 @@ void DispatchTouch(edict_t* pentTouched, edict_t* pentOther)
 		{
 			if (pClient->m_bNoTouch)
 			{
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+				return HOOK_HANDLED_OVERRIDE(0);
+#elif defined(RCBOT_META_BUILD)
 				RETURN_META(MRES_SUPERCEDE);
 #else
 				return;
@@ -288,7 +354,9 @@ void DispatchTouch(edict_t* pentTouched, edict_t* pentOther)
 		// bot code wants to evade engine seeing entities being touched.
 		if (pBot->Touch(pentTouched))
 		{
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+			return HOOK_HANDLED_OVERRIDE(0);
+#elif defined(RCBOT_META_BUILD)
 			RETURN_META(MRES_SUPERCEDE);
 #else
 			return;
@@ -296,14 +364,16 @@ void DispatchTouch(edict_t* pentTouched, edict_t* pentOther)
 		}
 	}
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*other_gFunctionTable.pfnTouch)(pentTouched, pentOther);
 #endif
 }
 
-void DispatchBlocked(edict_t* pentBlocked, edict_t* pentOther)
+HOOK_RET_VOID DispatchBlockedRcbot(edict_t* pentBlocked, edict_t* pentOther)
 {
 	static CBot* pBot = NULL;
 
@@ -322,26 +392,30 @@ void DispatchBlocked(edict_t* pentBlocked, edict_t* pentOther)
 	if (pBot)
 		pBot->Blocked(pentBlocked);
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*other_gFunctionTable.pfnBlocked)(pentBlocked, pentOther);
 #endif
 }
 
-void DispatchKeyValue(edict_t* pentKeyvalue, KeyValueData* pkvd)
+HOOK_RET_VOID DispatchKeyValueRcbot(edict_t* pentKeyvalue, KeyValueData* pkvd)
 {
 	gBotGlobals.KeyValue(pentKeyvalue, pkvd);
 
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*other_gFunctionTable.pfnKeyValue)(pentKeyvalue, pkvd);
 #endif
 }
 
-BOOL ClientConnect(edict_t* pEntity, const char* pszName, const char* pszAddress, char szRejectReason[128])
+HOOK_RET_INT ClientConnectRcbot(edict_t* pEntity, const char* pszName, const char* pszAddress, char szRejectReason[128])
 {
 	if (gpGlobals->deathmatch)
 	{
@@ -356,7 +430,7 @@ BOOL ClientConnect(edict_t* pEntity, const char* pszName, const char* pszAddress
 			pClient->Init();
 		}
 
-		if (debug_engine) { FILE* fp; fp = fopen("bot.txt", "a"); fprintf(fp, "ClientConnect: pent=%x name=%s\n", pEntity, pszName); fclose(fp); }
+		if (debug_engine) { FILE* fp; fp = fopen("bot.txt", "a"); fprintf(fp, "ClientConnect: pent=%x name=%s\n", (unsigned int)pEntity, pszName); fclose(fp); }
 
 		if (!IS_DEDICATED_SERVER())
 		{
@@ -444,7 +518,9 @@ BOOL ClientConnect(edict_t* pEntity, const char* pszName, const char* pszAddress
 
 						strcpy(szRejectReason, "\nMaximum public slots reached (some slots are reserved)");
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+						return HOOK_HANDLED_OVERRIDE(0);
+#elif defined(RCBOT_META_BUILD)
 						RETURN_META_VALUE(MRES_SUPERCEDE, 0);
 #else
 						return FALSE;
@@ -457,14 +533,16 @@ BOOL ClientConnect(edict_t* pEntity, const char* pszName, const char* pszAddress
 		gBotGlobals.m_iJoiningClients[iIndex] = 1;
 	}
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META_VALUE(MRES_IGNORED, 0);
 #else
 	return (*other_gFunctionTable.pfnClientConnect)(pEntity, pszName, pszAddress, szRejectReason);
 #endif
 }
 
-void ClientDisconnect(edict_t* pEntity)
+HOOK_RET_VOID ClientDisconnectRcbot(edict_t* pEntity)
 {
 	// Is the player that is disconnecting an RCbot?
 	CBot* pBot = UTIL_GetBotPointer(pEntity);
@@ -594,20 +672,32 @@ void ClientDisconnect(edict_t* pEntity)
 
 	gBotGlobals.m_Clients.ClientDisconnected(pEntity);
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*other_gFunctionTable.pfnClientDisconnect)(pEntity);
 #endif
 }
 
-void ClientPutInServer(edict_t* pEntity)
+#ifdef HLCOOP_BUILD
+HOOK_RET_VOID ClientPutInServerRcbot(CBasePlayer* pPlayer)
+#else
+HOOK_RET_VOID ClientPutInServerRcbot(edict_t* pEntity)
+#endif
 {
-	if (debug_engine) { FILE* fp; fp = fopen("bot.txt", "a"); fprintf(fp, "ClientPutInServer: %x\n", pEntity); fclose(fp); }
+#ifdef HLCOOP_BUILD
+	edict_t* pEntity = pPlayer->edict();
+#endif
+
+	if (debug_engine) { FILE* fp; fp = fopen("bot.txt", "a"); fprintf(fp, "ClientPutInServer: %x\n", (unsigned int)pEntity); fclose(fp); }
 
 	gBotGlobals.m_Clients.ClientConnected(pEntity);
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*other_gFunctionTable.pfnClientPutInServer)(pEntity);
@@ -664,7 +754,11 @@ void BotFunc_TraceToss(edict_t* ent, edict_t* ignore, TraceResult* tr)
 }
 
 ///////////////////////////////////////////////////////////////////////////
-void ClientCommand(edict_t* pEntity)
+#ifdef HLCOOP_BUILD
+HOOK_RET_VOID ClientCommandRcbot(CBasePlayer* pPlayer)
+#else
+HOOK_RET_VOID ClientCommandRcbot(edict_t* pEntity)
+#endif
 {
 	const char* pcmd;
 	const char* arg1;
@@ -672,6 +766,10 @@ void ClientCommand(edict_t* pEntity)
 	const char* arg3;
 	const char* arg4;
 	const char* arg5;
+
+#ifdef HLCOOP_BUILD
+	edict_t* pEntity = pPlayer->edict();
+#endif
 
 	if (!gBotGlobals.m_bIsFakeClientCommand)
 	{
@@ -876,7 +974,9 @@ void ClientCommand(edict_t* pEntity)
 
 				FreeArgs(pcmd, arg1, arg2, arg3, arg4, arg5);
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+				return HOOK_HANDLED_OVERRIDE(0);
+#elif defined(RCBOT_META_BUILD)
 				RETURN_META(MRES_SUPERCEDE);
 #else
 				return;
@@ -930,7 +1030,9 @@ void ClientCommand(edict_t* pEntity)
 				BugMessage(pEntity, "Your client was not found in list of clients");
 
 				FreeArgs(pcmd, arg1, arg2, arg3, arg4, arg5);
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+				return HOOK_HANDLED_OVERRIDE(0);
+#elif defined(RCBOT_META_BUILD)
 				RETURN_META(MRES_SUPERCEDE);
 #else
 				return;
@@ -972,7 +1074,9 @@ void ClientCommand(edict_t* pEntity)
 		else if (iState == BOT_CVAR_NOTEXIST)
 			BotMessage(pEntity, 0, "No command entered or bot command does not exist!");
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+		return HOOK_HANDLED_OVERRIDE(0);
+#elif defined(RCBOT_META_BUILD)
 		RETURN_META(MRES_SUPERCEDE);
 #else
 		return;
@@ -985,26 +1089,34 @@ void ClientCommand(edict_t* pEntity)
 		BotMessage(pEntity, 0, "Tip: If you want to add an RCBOT use the command \"rcbot addbot\"\n");
 	}
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*other_gFunctionTable.pfnClientCommand)(pEntity);
 #endif
 }
 
-void ServerActivate(edict_t* pEdictList, int edictCount, int clientMax)
+#ifdef HLCOOP_BUILD
+HOOK_RET_VOID ServerActivateRcbot()
+#else
+HOOK_RET_VOID ServerActivateRcbot(edict_t* pEdictList, int edictCount, int clientMax)
+#endif
 {
 	memset(gBotGlobals.m_iJoiningClients, 0, sizeof(int) * MAX_PLAYERS);
 
 	//	gBotGlobals.m_iJoiningClients = 0;
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*other_gFunctionTable.pfnServerActivate)(pEdictList, edictCount, clientMax);
 #endif
 }
 ///////////////////////////////////////////////////////////////////////////
-void ServerDeactivate(void)
+HOOK_RET_VOID ServerDeactivateRcbot(void)
 {
 	// server has finished (map changed for example) but new map
 	// hasn't loaded yet!!
@@ -1051,19 +1163,23 @@ void ServerDeactivate(void)
 	WaypointVisibility.ClearVisibilityTable();
 
 	gBotGlobals.m_iNumBots = 0;
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*other_gFunctionTable.pfnServerDeactivate)();
 #endif
 }
 
-void StartFrame(void)
+HOOK_RET_VOID StartFrameRcbot(void)
 {
-	handleThreadPrints();
 	gBotGlobals.StartFrame();
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
+	handleThreadPrints();
 	RETURN_META(MRES_IGNORED);
 #else
 
@@ -1077,7 +1193,11 @@ void StartFrame(void)
 // engine hooks
 //
 
-void pfnChangeLevel(const char* s1, const char* s2)
+#ifdef HLCOOP_BUILD
+HOOK_RET_VOID pfnChangeLevel(const char* s1, const char* s2)
+#else
+HOOK_RET_VOID pfnChangeLevel(char* s1, char* s2)
+#endif
 {
 	if (debug_engine) { fp = fopen("bot.txt", "a"); fprintf(fp, "pfnChangeLevel:\n"); fclose(fp); }
 
@@ -1100,14 +1220,16 @@ void pfnChangeLevel(const char* s1, const char* s2)
 		}
 	}
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else   
 	(*g_engfuncs.pfnChangeLevel)(s1, s2);
 #endif
 }
 
-void pfnEmitSound(edict_t* entity, int channel, const char* sample, /*int*/float volume, float attenuation, int fFlags, int pitch)
+HOOK_RET_VOID pfnEmitSound(edict_t* entity, int channel, const char* sample, /*int*/float volume, float attenuation, int fFlags, int pitch)
 {
 	if (entity != NULL)
 	{
@@ -1247,25 +1369,29 @@ void pfnEmitSound(edict_t* entity, int channel, const char* sample, /*int*/float
 	}
 
 	if (debug_engine) { fp = fopen("bot.txt", "a"); fprintf(fp, "pfnEmitSound:\n"); fclose(fp); }
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else   
 	(*g_engfuncs.pfnEmitSound)(entity, channel, sample, volume, attenuation, fFlags, pitch);
 #endif
 }
 
-void pfnMessageBegin(int msg_dest, int msg_type, const float* pOrigin, edict_t* ed)
+HOOK_RET_VOID pfnMessageBegin(int msg_dest, int msg_type, const float* pOrigin, edict_t* ed)
 {
 	BOOL no_error = gBotGlobals.NetMessageStarted(msg_dest, msg_type, pOrigin, ed);
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	//if ( no_error )
 	(*g_engfuncs.pfnMessageBegin)(msg_dest, msg_type, pOrigin, ed);
 #endif
 }
-void pfnMessageEnd(void)
+HOOK_RET_VOID pfnMessageEnd(void)
 {
 	if (gpGlobals->deathmatch)
 	{
@@ -1291,13 +1417,15 @@ void pfnMessageEnd(void)
 
 	gBotGlobals.m_bNetMessageStarted = FALSE;
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*g_engfuncs.pfnMessageEnd)();
 #endif
 }
-void pfnWriteByte(int iValue)
+HOOK_RET_VOID pfnWriteByte(int iValue)
 {
 	if (gpGlobals->deathmatch)
 	{
@@ -1315,13 +1443,15 @@ void pfnWriteByte(int iValue)
 				gBotGlobals.m_CurrentMessage->execute((void*)&iValue, gBotGlobals.m_iBotMsgIndex);
 		}
 	}
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*g_engfuncs.pfnWriteByte)(iValue);
 #endif
 }
-void pfnWriteChar(int iValue)
+HOOK_RET_VOID pfnWriteChar(int iValue)
 {
 	if (gpGlobals->deathmatch)
 	{
@@ -1339,13 +1469,15 @@ void pfnWriteChar(int iValue)
 				gBotGlobals.m_CurrentMessage->execute((void*)&iValue, gBotGlobals.m_iBotMsgIndex);
 		}
 	}
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*g_engfuncs.pfnWriteChar)(iValue);
 #endif
 }
-void pfnWriteShort(int iValue)
+HOOK_RET_VOID pfnWriteShort(int iValue)
 {
 	if (gpGlobals->deathmatch)
 	{
@@ -1364,13 +1496,15 @@ void pfnWriteShort(int iValue)
 				gBotGlobals.m_CurrentMessage->execute((void*)&iValue, gBotGlobals.m_iBotMsgIndex);
 		}
 	}
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*g_engfuncs.pfnWriteShort)(iValue);
 #endif
 }
-void pfnWriteLong(int iValue)
+HOOK_RET_VOID pfnWriteLong(int iValue)
 {
 	if (gpGlobals->deathmatch)
 	{
@@ -1388,13 +1522,15 @@ void pfnWriteLong(int iValue)
 				gBotGlobals.m_CurrentMessage->execute((void*)&iValue, gBotGlobals.m_iBotMsgIndex);
 		}
 	}
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*g_engfuncs.pfnWriteLong)(iValue);
 #endif
 }
-void pfnWriteAngle(float flValue)
+HOOK_RET_VOID pfnWriteAngle(float flValue)
 {
 	if (gpGlobals->deathmatch)
 	{
@@ -1412,13 +1548,15 @@ void pfnWriteAngle(float flValue)
 				gBotGlobals.m_CurrentMessage->execute((void*)&flValue, gBotGlobals.m_iBotMsgIndex);
 		}
 	}
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*g_engfuncs.pfnWriteAngle)(flValue);
 #endif
 }
-void pfnWriteCoord(float flValue)
+HOOK_RET_VOID pfnWriteCoord(float flValue)
 {
 	if (gpGlobals->deathmatch)
 	{
@@ -1436,13 +1574,15 @@ void pfnWriteCoord(float flValue)
 				gBotGlobals.m_CurrentMessage->execute((void*)&flValue, gBotGlobals.m_iBotMsgIndex);
 		}
 	}
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else   
 	(*g_engfuncs.pfnWriteCoord)(flValue);
 #endif
 }
-void pfnWriteString(const char* sz)
+HOOK_RET_VOID pfnWriteString(const char* sz)
 {
 	if (gpGlobals->deathmatch)
 	{
@@ -1460,13 +1600,15 @@ void pfnWriteString(const char* sz)
 				gBotGlobals.m_CurrentMessage->execute((void*)sz, gBotGlobals.m_iBotMsgIndex);
 		}
 	}
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*g_engfuncs.pfnWriteString)(sz);
 #endif
 }
-void pfnWriteEntity(int iValue)
+HOOK_RET_VOID pfnWriteEntity(int iValue)
 {
 	if (gpGlobals->deathmatch)
 	{
@@ -1484,22 +1626,25 @@ void pfnWriteEntity(int iValue)
 				gBotGlobals.m_CurrentMessage->execute((void*)&iValue, gBotGlobals.m_iBotMsgIndex);
 		}
 	}
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*g_engfuncs.pfnWriteEntity)(iValue);
 #endif
 }
 
-int pfnRegUserMsg(const char* pszName, int iSize)
+HOOK_RET_INT pfnRegUserMsg(const char* pszName, int iSize)
 {
 	int msg = 0;
 
-#ifdef RCBOT_META_BUILD
-
+#ifdef HLCOOP_BUILD
+	msg = GET_USER_MSG_ID(NULL, pszName, &iSize);
+#elif defined(RCBOT_META_BUILD)
 	extern plugin_info_t Plugin_info;
 
-	//msg = GET_USER_MSG_ID(&Plugin_info, pszName, &iSize);
+	msg = GET_USER_MSG_ID(&Plugin_info, pszName, &iSize);
 #else
 
 	msg = (*g_engfuncs.pfnRegUserMsg)(pszName, iSize);
@@ -1516,7 +1661,9 @@ int pfnRegUserMsg(const char* pszName, int iSize)
 	gBotGlobals.m_NetEntityMessages.UpdateMessage(pszName, msg, iSize);
 	gBotGlobals.m_NetAllMessages.UpdateMessage(pszName, msg, iSize);
 
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META_VALUE(MRES_IGNORED, 0);
 #else
 	return msg;
@@ -1524,7 +1671,7 @@ int pfnRegUserMsg(const char* pszName, int iSize)
 
 }
 
-void pfnSetClientMaxspeed(const edict_t* pEdict, float fNewMaxspeed)
+HOOK_RET_VOID pfnSetClientMaxspeed(const edict_t* pEdict, float fNewMaxspeed)
 {
 	// Is this player a bot?
 	CBot* pBot = UTIL_GetBotPointer(pEdict);
@@ -1534,15 +1681,21 @@ void pfnSetClientMaxspeed(const edict_t* pEdict, float fNewMaxspeed)
 		pBot->m_fMaxSpeed = fNewMaxspeed;
 	}
 
-	if (debug_engine) { fp = fopen("bot.txt", "a"); fprintf(fp, "pfnSetClientMaxspeed: edict=%x %f\n", pEdict, fNewMaxspeed); fclose(fp); }
-#ifdef RCBOT_META_BUILD
+	if (debug_engine) { fp = fopen("bot.txt", "a"); fprintf(fp, "pfnSetClientMaxspeed: edict=%x %f\n", (unsigned int)pEdict, fNewMaxspeed); fclose(fp); }
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*g_engfuncs.pfnSetClientMaxspeed)(pEdict, fNewMaxspeed);
 #endif
 }
 
-void pfnSetClientKeyValue(int clientIndex, char* infobuffer, const char* key, char* value)
+#ifdef HLCOOP_BUILD
+HOOK_RET_VOID pfnSetClientKeyValue(int clientIndex, char* infobuffer, const char* key, const char* value)
+#elif defined(RCBOT_META_BUILD)
+HOOK_RET_VOID pfnSetClientKeyValue(int clientIndex, char* infobuffer, char* key, char* value)
+#endif
 {
 	edict_t* pEdict = INDEXENT(clientIndex);
 
@@ -1609,14 +1762,17 @@ void pfnSetClientKeyValue(int clientIndex, char* infobuffer, const char* key, ch
 	}
 
 	if (debug_engine) { fp = fopen("bot.txt", "a"); fprintf(fp, "pfnSetClientKeyValue: %s %s\n", key, value); fclose(fp); }
-#ifdef RCBOT_META_BUILD
+#ifdef HLCOOP_BUILD
+	return HOOK_CONTINUE;
+#elif defined(RCBOT_META_BUILD)
 	RETURN_META(MRES_IGNORED);
 #else
 	(*g_engfuncs.pfnSetClientKeyValue)(clientIndex, infobuffer, key, value);
 #endif
 }
 
-const char* pfnGetPlayerAuthId(const edict_t* e)
+#ifndef HLCOOP_BUILD
+const char* pfnGetPlayerAuthId(edict_t* e)
 {
 	// TODO: not needed for sven, but for other games? -w00t
 	static const char* BOT_STEAM_ID = "BOT";
@@ -1635,6 +1791,83 @@ const char* pfnGetPlayerAuthId(const edict_t* e)
 	return (*g_engfuncs.pfnGetPlayerAuthId)(e);
 #endif
 }
+#endif
+
+#ifdef HLCOOP_BUILD
+
+cvar_t* bot_ver_cvar;
+
+HLCOOP_PLUGIN_HOOKS g_hooks;
+
+extern "C" int DLLEXPORT PluginInit(void* plugin, int interfaceVersion) {
+	bot_ver_cvar = RegisterPluginCVar(plugin, BOT_VER_CVAR, BOT_VER, 0, 0);
+
+	RegisterPluginCommand(plugin, BOT_COMMAND_ACCESS, RCBot_ServerCommand);
+
+	// Do these at start
+	gBotGlobals.Init();
+	gBotGlobals.GetModInfo();
+
+	SetupMenus(-1);
+
+	//gBotGlobals.GameInit();
+
+	g_argv = (char*)malloc(1024);
+
+	g_hooks.pfnDispatchSpawn = DispatchSpawnRcbot;
+	g_hooks.pfnDispatchTouch = DispatchTouchRcbot;
+	g_hooks.pfnDispatchBlocked = DispatchBlockedRcbot;
+	g_hooks.pfnDispatchKeyValue = DispatchKeyValueRcbot;
+	g_hooks.pfnClientConnect = ClientConnectRcbot;
+	g_hooks.pfnClientDisconnect = ClientDisconnectRcbot;
+	g_hooks.pfnClientPutInServer = ClientPutInServerRcbot;
+	g_hooks.pfnClientCommand = ClientCommandRcbot;
+	g_hooks.pfnMapInit = ServerActivateRcbot;
+	g_hooks.pfnServerDeactivate = ServerDeactivateRcbot;
+	g_hooks.pfnStartFrame = StartFrameRcbot;
+
+	g_hooks.pfnChangeLevel = pfnChangeLevel;
+	g_hooks.pfnEmitSound = pfnEmitSound;
+	g_hooks.pfnRegUserMsg = pfnRegUserMsg;
+	g_hooks.pfnSetClientMaxspeed = pfnSetClientMaxspeed;
+	g_hooks.pfnSetClientKeyValue = pfnSetClientKeyValue;
+	g_hooks.pfnCmd_Argc = pfnCmd_Argc_hook;
+	g_hooks.pfnCmd_Argv = pfnCmd_Argv_hook;
+	g_hooks.pfnCmd_Args = pfnCmd_Args;
+
+	g_hooks.pfnMessageBegin = pfnMessageBegin;
+	g_hooks.pfnWriteAngle = pfnWriteAngle;
+	g_hooks.pfnWriteByte = pfnWriteByte;
+	g_hooks.pfnWriteChar = pfnWriteChar;
+	g_hooks.pfnWriteCoord = pfnWriteCoord;
+	g_hooks.pfnWriteEntity = pfnWriteEntity;
+	g_hooks.pfnWriteLong = pfnWriteLong;
+	g_hooks.pfnWriteShort = pfnWriteShort;
+	g_hooks.pfnWriteString = pfnWriteString;
+	g_hooks.pfnMessageEnd = pfnMessageEnd;
+
+	return InitPluginApi(plugin, &g_hooks, interfaceVersion);
+}
+
+extern "C" void DLLEXPORT PluginExit() {
+	gBotGlobals.FreeGlobalMemory();
+}
+
+#else
+
+cvar_t bot_ver_cvar = { BOT_VER_CVAR,BOT_VER,FCVAR_SERVER };
+
+plugin_info_t Plugin_info = {
+	META_INTERFACE_VERSION,	// ifvers
+	BOT_NAME,	// name
+	BOT_VER,	// version
+	__DATE__,	// date
+	BOT_AUTHOR,	// author
+	BOT_WEBSITE,	// url
+	BOT_DBG_MSG_TAG,	// logtag, all caps please
+	PT_STARTUP,	// (when) loadable
+	PT_NEVER,	// (when) unloadable
+};
 
 void PluginInit() {
     CVAR_REGISTER(&bot_ver_cvar);
@@ -1669,8 +1902,8 @@ void PluginInit() {
 	g_engine_hooks.pfnSetClientMaxspeed = pfnSetClientMaxspeed;
 	g_engine_hooks.pfnSetClientKeyValue = pfnSetClientKeyValue;
 	g_engine_hooks.pfnGetPlayerAuthId = pfnGetPlayerAuthId;
-	g_engine_hooks.pfnCmd_Argc = pfnCmd_Argc;
-	g_engine_hooks.pfnCmd_Argv = pfnCmd_Argv;
+	g_engine_hooks.pfnCmd_Argc = pfnCmd_Argc_hook;
+	g_engine_hooks.pfnCmd_Argv = pfnCmd_Argv_hook;
 	g_engine_hooks.pfnCmd_Args = pfnCmd_Args;
 
 	g_engine_hooks.pfnMessageBegin = pfnMessageBegin;
@@ -1688,3 +1921,5 @@ void PluginInit() {
 void PluginExit() {
     gBotGlobals.FreeGlobalMemory();
 }
+
+#endif

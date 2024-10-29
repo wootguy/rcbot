@@ -59,14 +59,22 @@
 // Bot & engine utility functions
 //
 
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#endif
+
 #include "bot_const.h"
 #include "bot.h"
 
 #include "waypoint.h"
 
-extern CBotGlobals gBotGlobals;
+#ifndef HLCOOP_BUILD
 extern enginefuncs_t g_engfuncs;
+#endif
+
+extern CBotGlobals gBotGlobals;
 extern CWaypointLocations WaypointLocations;
 
 #define PI 3.141592654
@@ -546,6 +554,8 @@ int GetMessageID ( const char *szMsg )
 	msg = gBotGlobals.m_NetEntityMessages.GetMessage(0,szMsg);
 	if ( msg )
 		msg_id = msg->MessageNum();
+#elif defined(HLCOOP_BUILD)
+	msg_id = GET_USER_MSG_ID(NULL, szMsg, 0);
 #else
 	extern plugin_info_t Plugin_info;
 
@@ -1153,6 +1163,7 @@ int UTIL_GetNumHives ( void )
 	return iNum;
 }
 
+#ifndef HLCOOP_BUILD
 float UTIL_AngleDiff( float destAngle, float srcAngle )
 {
 	float delta;
@@ -1170,6 +1181,7 @@ float UTIL_AngleDiff( float destAngle, float srcAngle )
 	}
 	return delta;
 }
+#endif
 
 void UTIL_CountBuildingsInRange ( Vector vOrigin, float fRange, int *iDefs, int *iOffs, int *iSens, int *iMovs )
 {
@@ -1871,7 +1883,7 @@ void HudText :: InitMessage ( const char *message )
 
 	m_sMessage[HUD_TEXT_LENGTH-1] = 0;
 
-	length = strlen(m_sMessage);								
+	length = (short)strlen(m_sMessage);								
 	
 	i = 0;
 				

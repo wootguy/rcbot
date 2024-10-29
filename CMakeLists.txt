@@ -46,11 +46,25 @@ set(SOURCE_FILES
 	src/waypoint.h src/waypoint.cpp
 	src/main.cpp
 	src/rcbot_vector.h
+	src/hlcoop.h
 )
 
-add_library(${PROJECT_NAME} SHARED)
+if (HLCOOP_BUILD)
+	add_library(${PROJECT_NAME} SHARED
+		${SOURCE_FILES}
+	)
+	
+	hlcoop_setup_plugin("plugins/server/")
+	
+	if (UNIX)
+		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -w")
+	endif()
+	
+	target_compile_definitions(${PROJECT_NAME} PRIVATE -DHLCOOP_BUILD)
+else()
+	add_library(${PROJECT_NAME} SHARED)
+	add_subdirectory(mmlib)
+	mmlib_default_setup()
+endif()
 
-add_subdirectory(mmlib)
-mmlib_default_setup()
-
-add_compile_definitions(RCBOT_META_BUILD)
+target_compile_definitions(${PROJECT_NAME} PRIVATE -DRCBOT_META_BUILD)

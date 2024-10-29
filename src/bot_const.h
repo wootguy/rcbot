@@ -1293,7 +1293,7 @@ typedef enum
 
 #define BOT_CHAT_FILE "bot_chat.ini"
 
-typedef enum eBotChatType
+enum eBotChatType
 {
 	BOT_CHAT_UNKNOWN = -1,
 	BOT_CHAT_KILLS = 0,
@@ -1307,7 +1307,7 @@ typedef enum eBotChatType
 	BOT_CHAT_MAX
 };
 
-typedef enum eBotRepType
+enum eBotRepType
 {
 	BOT_REP_UNKNOWN = 0,
 	BOT_REP_NEUTRAL,
@@ -1315,7 +1315,7 @@ typedef enum eBotRepType
 	BOT_REP_UNFRIENDLY
 };
 
-typedef enum eBattleGroundsMessage
+enum eBattleGroundsMessage
 {
 	BOT_BG_MSG_YES = 1,
 	BOT_BG_MSG_NO,

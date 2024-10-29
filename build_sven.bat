@@ -1,1 +1,1 @@
-call mmlib\build.bat
+call mmlib\build.bat -DHLCOOP_BUILD=OFF

@@ -46,7 +46,11 @@
 
 #include "extdll.h"
 
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#endif
 
 #include "bot_const.h"
 #include "bot.h"
@@ -599,7 +603,7 @@ eBotCvarState CUtilCommand :: action ( CClient *pClient, const char *arg1, const
     }
     else if ( pEntity && FStrEq("offsearch",arg1) )
     {
-		char sz[128];
+		//char sz[128];
         edict_t *pEnt = NULL;
         edict_t *pEntity = pClient->GetPlayer();
         
@@ -1930,8 +1934,10 @@ eBotCvarState BotFunc_AddBot ( CClient *pClient, const char *arg1, const char *a
     int index; // bots edict index
     
     pEdict->v.frags = 0; // reset his frag count 
-    
-#ifdef RCBOT_META_BUILD
+
+#ifdef HLCOOP_BUILD
+	GetClassPtr((CBasePlayer*)VARS(pEdict));
+#elif defined(RCBOT_META_BUILD)
     CALL_GAME_ENTITY(PLID,"player",VARS(pEdict)); // Olo
 #else
     // create the player entity by calling MOD's player function
@@ -2050,8 +2056,14 @@ eBotCvarState BotFunc_AddBot ( CClient *pClient, const char *arg1, const char *a
     (*g_engfuncs.pfnSetClientKeyValue)(index, sInfoBuffer, "topcolor", szColour ); 
     sprintf(szColour,"%d",pBot->m_Profile.m_iBottomColour);
     (*g_engfuncs.pfnSetClientKeyValue)(index, sInfoBuffer, "bottomcolor", szColour ); 
-    
-#ifdef RCBOT_META_BUILD
+
+#ifdef HLCOOP_BUILD
+	szName = gBotGlobals.m_Bots[iBotIndex].m_Profile.m_szBotName;
+	MDLL_ClientConnect(pEdict, szName, "127.0.0.1", ptr);
+	MDLL_ClientPutInServer(pEdict);
+
+	gBotGlobals.m_Clients.ClientConnected(pEdict);
+#elif defined(RCBOT_META_BUILD)
     // update joining clients because metamod wont call engine client connect?
     //gBotGlobals.m_iJoiningClients++;
     MDLL_ClientConnect( pEdict, szName, "127.0.0.1", ptr );

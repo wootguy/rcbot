@@ -1,1 +1,0 @@
-call mmlib\build.bat -DHLCOOP_BUILD=ON

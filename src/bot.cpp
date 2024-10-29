@@ -47,7 +47,12 @@
 
 #include "extdll.h"
 
+#ifdef HLCOOP_BUILD
+#include "hlcoop.h"
+#else
 #include "mmlib.h"
+#endif
+
 //#include "player.h"
 #include "bot_const.h"
 #include "bot.h"
@@ -10266,7 +10271,7 @@ void BotMessage (edict_t *pEntity, int errorlevel, char *fmt, ...)
 			
 		}
 		else
-			ALERT(at_console,string);
+			ALERT(at_console, "%s", string);
 	}
 	else
 	{		
@@ -10282,7 +10287,7 @@ void BotMessage (edict_t *pEntity, int errorlevel, char *fmt, ...)
 				ALERT(at_console,BOT_DBG_MSG_TAG);
 
 				BotFile_Write(string);
-				ALERT(at_error,string);	
+				ALERT(at_error, "%s", string);
 
 #ifndef __linux__
 				MessageBox(NULL,string,"RCBot Error",MB_OK);				
@@ -10297,7 +10302,7 @@ void BotMessage (edict_t *pEntity, int errorlevel, char *fmt, ...)
 				ALERT(at_console,BOT_DBG_MSG_TAG);
 
 				BotFile_Write(string);
-				ALERT(at_error,string);
+				ALERT(at_error, "%s", string);
 
 #ifndef __linux__
 				MessageBox(NULL,string,"RCBot Error",MB_OK);				
