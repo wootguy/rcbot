@@ -80,7 +80,7 @@
 #define MDLL_AllowLagCompensation		MDLL_FUNC->pfnAllowLagCompensation
 
 #define UTIL_LogPrintf(fmt, ...) ALERT(at_logged, fmt, __VA_ARGS__)
-#define ClientPrint UTIL_ClientPrint
+#define ClientPrint(edict, mode, msg) UTIL_ClientPrint(CBaseEntity::Instance(edict), (PRINT_TYPE)mode, msg)
 #define ClientPrintALL UTIL_ClientPrintAll
 
 #define GET_INFOKEYBUFFER	(*g_engfuncs.pfnGetInfoKeyBuffer)

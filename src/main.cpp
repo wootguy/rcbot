@@ -542,8 +542,16 @@ HOOK_RET_INT ClientConnectRcbot(edict_t* pEntity, const char* pszName, const cha
 #endif
 }
 
+#ifdef HLCOOP_BUILD
+HOOK_RET_VOID ClientDisconnectRcbot(CBasePlayer* pPlayer)
+#else
 HOOK_RET_VOID ClientDisconnectRcbot(edict_t* pEntity)
+#endif
 {
+#ifdef HLCOOP_BUILD
+	edict_t* pEntity = pPlayer->edict();
+#endif
+
 	// Is the player that is disconnecting an RCbot?
 	CBot* pBot = UTIL_GetBotPointer(pEntity);
 
@@ -1229,7 +1237,11 @@ HOOK_RET_VOID pfnChangeLevel(char* s1, char* s2)
 #endif
 }
 
+#ifdef HLCOOP_BUILD
+HOOK_RET_VOID pfnEmitSound(edict_t* entity, int channel, const char* sample, /*int*/float volume, float attenuation, int fFlags, int pitch, const float* origin, uint32_t recipients)
+#else
 HOOK_RET_VOID pfnEmitSound(edict_t* entity, int channel, const char* sample, /*int*/float volume, float attenuation, int fFlags, int pitch)
+#endif
 {
 	if (entity != NULL)
 	{
@@ -1799,10 +1811,15 @@ cvar_t* bot_ver_cvar;
 
 HLCOOP_PLUGIN_HOOKS g_hooks;
 
-extern "C" int DLLEXPORT PluginInit(void* plugin, int interfaceVersion) {
-	bot_ver_cvar = RegisterPluginCVar(plugin, BOT_VER_CVAR, BOT_VER, 0, 0);
+bool ServerCommandCallback(CBasePlayer* plr, const CommandArgs& args) {
+	RCBot_ServerCommand();
+	return true;
+}
 
-	RegisterPluginCommand(plugin, BOT_COMMAND_ACCESS, RCBot_ServerCommand);
+extern "C" int DLLEXPORT PluginInit() {
+	bot_ver_cvar = RegisterPluginCVar(BOT_VER_CVAR, BOT_VER, 0, 0);
+
+	RegisterPluginCommand(BOT_COMMAND_ACCESS, ServerCommandCallback, FL_CMD_SERVER);
 
 	// Do these at start
 	gBotGlobals.Init();
@@ -1846,7 +1863,7 @@ extern "C" int DLLEXPORT PluginInit(void* plugin, int interfaceVersion) {
 	g_hooks.pfnWriteString = pfnWriteString;
 	g_hooks.pfnMessageEnd = pfnMessageEnd;
 
-	return InitPluginApi(plugin, &g_hooks, interfaceVersion);
+	return RegisterPlugin(&g_hooks);
 }
 
 extern "C" void DLLEXPORT PluginExit() {
