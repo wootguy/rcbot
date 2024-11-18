@@ -56,14 +56,14 @@ static bool file_exists(const char* path) {
 void MegaHal::load_personality(const char* path)
 {
     if (saveload_thread != NULL) {
-        println("Waiting for model to finish loading/saving before loading personality again");
+        ALERT(at_console, "Waiting for model to finish loading/saving before loading personality again\n");
         saveload_thread->join();
         delete saveload_thread;
         saveload_thread = NULL;
     }
 
     if (model != NULL) {
-        println("Personality already loaded.");
+        ALERT(at_console, "Personality already loaded.\n");
         return;
     }
 
@@ -122,7 +122,7 @@ void MegaHal::load_personality_thread(const char* path) {
     }
 
     g_load_threads.dec();
-    println("Finished loading brain: %s", path);
+    ALERT(at_console, "Finished loading brain: %s\n", path);
     free((void*)path);
 }
 
@@ -130,7 +130,7 @@ char* MegaHal::do_reply(char *input, bool learnFromInput)
 {
     if (saveload_thread != NULL) {
         if (saveload_status.getValue() == 1) {
-            println("Can't reply yet. Model is saving/loading");
+            ALERT(at_console, "Can't reply yet. Model is saving/loading\n");
             return "my brain is still loading";
         }
         saveload_thread->join();
@@ -139,7 +139,7 @@ char* MegaHal::do_reply(char *input, bool learnFromInput)
     }
 
     if (model == NULL) {
-        println("Can't reply. Model is null");
+        ALERT(at_console, "Can't reply. Model is null\n");
         return "My HAL model is null";
     }
 
@@ -164,7 +164,7 @@ void MegaHal::learn_no_reply(char *input)
 {
     if (saveload_thread != NULL) {
         if (saveload_status.getValue() == 1) {
-            println("Can't learn yet. Model is saving/loading");
+            ALERT(at_console, "Can't learn yet. Model is saving/loading\n");
             return;
         }
         saveload_thread->join();
@@ -173,7 +173,7 @@ void MegaHal::learn_no_reply(char *input)
     }
 
     if (model == NULL) {
-        println("Can't learn. Model is null");
+        ALERT(at_console, "Can't learn. Model is null\n");
     }
 
     upper(input);
@@ -184,14 +184,14 @@ void MegaHal::learn_no_reply(char *input)
 void MegaHal::save_model(bool deleteAfterSaving)
 {
     if (saveload_thread != NULL) {
-        println("Waiting for model to finish loading/saving before saving personality again");
+        ALERT(at_console, "Waiting for model to finish loading/saving before saving personality again\n");
         saveload_thread->join();
         delete saveload_thread;
         saveload_thread = NULL;
     }
 
     if (model == NULL) {
-        println("Can't save model. Model was deleted.");
+        ALERT(at_console, "Can't save model. Model was deleted.\n");
         return;
     }
 
@@ -233,7 +233,7 @@ void MegaHal::save_model_thread(bool deleteAfterSave) {
         free_everything();
     }
 
-    println("Finished saving brain: %s", brnpath.c_str());
+    ALERT(at_console, "Finished saving brain: %s\n", brnpath.c_str());
 
 cleanup:
     saveload_status.setValue(0);
@@ -1184,7 +1184,7 @@ char* MegaHal::generate_reply(HAL_MODEL *model, HAL_DICTIONARY *words)
             length += replywords->entry[k].length;
 
         if (length >= HAL_MAX_REPLY_LEN) {
-            println("[MegaHal] max reply length exceeded %d > %d)\n", length, HAL_MAX_REPLY_LEN);
+            ALERT(at_console, "[MegaHal] max reply length exceeded %d > %d)\n", length, HAL_MAX_REPLY_LEN);
             continue;
         }
 
