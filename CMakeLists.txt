@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.20)
 
 option(HLCOOP_BUILD "Use the hl co-op headers rather than the hlsdk + sven headers" ON)
 
@@ -55,10 +55,6 @@ if (HLCOOP_BUILD)
 	)
 	
 	hlcoop_setup_plugin("plugins/server/")
-	
-	if (UNIX)
-		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -w")
-	endif()
 	
 	target_compile_definitions(${PROJECT_NAME} PRIVATE -DHLCOOP_BUILD)
 else()
