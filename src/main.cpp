@@ -10,8 +10,10 @@
 
 using namespace std;
 
+#ifndef HLCOOP_BUILD
 #pragma comment(linker, "/EXPORT:GiveFnptrsToDll=_GiveFnptrsToDll@8")
 #pragma comment(linker, "/SECTION:.data,RW")
+#endif
 
 int debug_engine;
 char* g_argv;

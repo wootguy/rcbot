@@ -1,12 +1,11 @@
 #pragma once
 #include <extdll.h>
 #include "util.h"
-#include "cbase.h"
-#include "CBaseMonster.h"
 #include "CBasePlayer.h"
 #include "CBasePlayerWeapon.h"
 #include "user_messages.h"
 #include "PluginHooks.h"
+#include "hlds_hooks.h"
 
 #define CLASS_XRACE_PITDRONE CLASS_ALIEN_RACE_X_PITDRONE
 #define CLASS_XRACE_SHOCK CLASS_ALIEN_RACE_X
@@ -85,6 +84,9 @@
 
 #define GET_INFOKEYBUFFER	(*g_engfuncs.pfnGetInfoKeyBuffer)
 #define GET_USER_MSG_ID(pluginid, name, size)  GetUserMsgInfo(name, size)
+
+#undef PRECACHE_MODEL
+#define PRECACHE_MODEL(path) PRECACHE_MODEL_ENT(NULL, path)
 
 #ifndef _WIN32
 #define _stricmp stricmp
