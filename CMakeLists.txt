@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.10)
 
 option(HLCOOP_BUILD "Use the hl co-op headers rather than the hlsdk + sven headers" ON)
 
