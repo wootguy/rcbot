@@ -61,6 +61,8 @@
 
 #include "dir.h"
 
+#undef GetMessage
+
 extern CWaypointVisibilityTable WaypointVisibility;
 extern CWaypointLocations WaypointLocations;
 

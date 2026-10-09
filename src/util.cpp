@@ -69,6 +69,7 @@
 #include "bot.h"
 
 #include "waypoint.h"
+#include <cstdarg>
 
 #ifndef HLCOOP_BUILD
 extern enginefuncs_t g_engfuncs;

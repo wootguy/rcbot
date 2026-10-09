@@ -66,7 +66,13 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdarg.h>
 
+#ifdef _WIN32
+#undef WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#undef GetMessage
+#endif
 
 // for logging
 #include <time.h>
